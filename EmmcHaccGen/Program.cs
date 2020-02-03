@@ -26,6 +26,7 @@ namespace EmmcHaccGen
 
             return entry;
         }
+        /*
         Byte[] ReadFile(ref IFileSystem filesystem, string path)
         {
             Byte[] tempByte;
@@ -77,6 +78,25 @@ namespace EmmcHaccGen
             bytelist.AddRange(tempByte.ToList());
             Pad(ref bytelist, (0x800000 - tempByte.Length - extrapaddingsize));
         }
+        */
+        Dictionary<string, List<ncaList>> SortNca(List<ncaList> list)
+        {
+            Dictionary<string, List<ncaList>> NcaDict = new Dictionary<string, List<ncaList>>();
+
+            foreach (ncaList nca in list)
+            {
+                if (NcaDict.ContainsKey(nca.titleid))
+                    NcaDict[nca.titleid].Add(nca);
+                else
+                {
+                    List<ncaList> templist = new List<ncaList>();
+                    templist.Add(nca);
+                    NcaDict.Add(nca.titleid, templist);
+                }
+            }
+
+            return NcaDict;
+        }
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
@@ -87,10 +107,16 @@ namespace EmmcHaccGen
         {
             List<ncaList> ncalist = new List<ncaList>();
             keyset = ExternalKeyReader.ReadKeyFile("prod.keys");
+            /*
             List<Byte> boot0 = new List<byte>();
             List<Byte> boot1 = new List<byte>();
             List<Byte> bcpkg2_1 = new List<byte>();
             List<Byte> bcpkg2_3 = new List<byte>();
+            */
+            bis boot0 = new bis(0x180000);
+            bis boot1 = new bis(0x80000);
+            bis bcpkg2_1 = new bis(0x800000);
+            bis bcpkg2_3 = new bis(0x800000);
 
             foreach (var file in Directory.EnumerateFiles("9.1.0", "*.nca"))
             {
@@ -98,6 +124,45 @@ namespace EmmcHaccGen
                 ncalist.Add(parseNca(file.Substring("9.1.0".Length + 1), file.ToString()));
             }
 
+            ncaList Normal = ncalist.Find(x => x.titleid == "0100000000000819" && x.type == NcaContentType.Data);
+            ncaList Safe = ncalist.Find(x => x.titleid == "010000000000081A" && x.type == NcaContentType.Data);
+
+            ncaBisExtractor NormalExtractor = new ncaBisExtractor($"9.1.0\\{Normal.filename}", keyset);
+            ncaBisExtractor SafeExtractor = new ncaBisExtractor($"9.1.0\\{Safe.filename}", keyset);
+
+            NormalExtractor.Extract();
+            SafeExtractor.Extract();
+
+            boot0.Write(NormalExtractor.bct);
+            boot0.Pad(0x4000 - NormalExtractor.bct.Length);
+            boot0.Write(SafeExtractor.bct);
+            boot0.Pad(0x4000 - SafeExtractor.bct.Length);
+            boot0.Write(NormalExtractor.bct);
+            boot0.Pad(0x4000 - NormalExtractor.bct.Length);
+            boot0.Write(SafeExtractor.bct);
+            boot0.Pad(0x4000 - SafeExtractor.bct.Length);
+            boot0.Pad(0xF0000);
+            boot0.Write(NormalExtractor.pkg1);
+            boot0.Pad(0x40000 - NormalExtractor.pkg1.Length);
+            boot0.Write(NormalExtractor.pkg1);
+            boot0.Pad(0x40000 - NormalExtractor.pkg1.Length);
+            boot0.DumpToFile("boot0.testnew");
+
+            boot1.Write(SafeExtractor.pkg1);
+            boot1.Pad(0x40000 - SafeExtractor.pkg1.Length);
+            boot1.Write(SafeExtractor.pkg1);
+            boot1.Pad(0x40000 - SafeExtractor.pkg1.Length);
+            boot1.DumpToFile("boot1.testnew");
+
+            bcpkg2_1.Pad(0x4000);
+            bcpkg2_1.Write(NormalExtractor.pkg2);
+            bcpkg2_1.DumpToFile("bcpkg2_1.testnew");
+
+            bcpkg2_3.Pad(0x40000);
+            bcpkg2_3.Write(SafeExtractor.pkg2);
+            bcpkg2_3.DumpToFile("bcpkg2_3.testnew");
+
+            /*
             foreach (var entry in ncalist)
             {
                 Console.WriteLine($"File: {entry.filename}, TitleID: {entry.titleid}, Type: {entry.type}");
@@ -136,6 +201,9 @@ namespace EmmcHaccGen
             Pad(ref bcpkg2_3, 0x40000);
             AddPkg2Bytes(ref bcpkg2_3, ref filesystemSafe, 0x40000);
 
+            //IFileSystem filesystemCode = ncaNormal.OpenFileSystem(NcaSectionType.Code, IntegrityCheckLevel.None);
+            //filesystemCode.
+            //holy fuck https://github.com/Thealexbarney/LibHac/blob/d08e6b060c913a8a08df4b546a3cb290dc07851f/src/LibHac/SwitchFs.cs#L142
 
             inNormal.Dispose();
             inSafe.Dispose();
@@ -171,6 +239,40 @@ namespace EmmcHaccGen
             {
                 file.Write(bcpkg2_3.ToArray(), 0, bcpkg2_3.Count);
             }
+
+            Dictionary<string, List<ncaList>> test = SortNca(ncalist);
+
+            foreach(KeyValuePair<string, List<ncaList>> hi in test)
+            {
+                Console.WriteLine($"Key: {hi.Key}");
+                
+                foreach(ncaList hi2 in hi.Value)
+                {
+                    Console.WriteLine($"^- {hi2.filename} {hi2.type}");
+                }
+
+                using (IStorage tempncastorage = new LocalStorage($"9.1.0\\{hi.Value.Find(x => x.type == NcaContentType.Meta).filename}", FileAccess.Read))
+                {
+                    var tempNca = new Nca(keyset, tempncastorage);
+                    using (IFileSystem tempncafilesystem = tempNca.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.ErrorOnInvalid))
+                    {
+                        foreach (var temp in tempncafilesystem.EnumerateEntries())
+                        {
+                            Console.WriteLine(temp.FullPath);
+                        }
+                    }
+                }
+                
+                
+                
+
+
+                //tempncafilesystem.Dispose();
+                //tempncastorage.Dispose();
+
+            }
+
+            */
 
             Console.ReadKey();
         }
