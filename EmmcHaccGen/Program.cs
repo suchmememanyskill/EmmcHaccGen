@@ -22,7 +22,7 @@ namespace EmmcHaccGen
                 Nca nca = new Nca(keyset, infile);
                 entry.titleid = $"{nca.Header.TitleId:X16}";
                 entry.type = nca.Header.ContentType;
-
+                entry.size = nca.Header.NcaSize;
                 if (entry.type == NcaContentType.Meta)
                 {
                     using (IFileSystem fs = nca.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.ErrorOnInvalid))
@@ -127,6 +127,9 @@ namespace EmmcHaccGen
         }
         void Start()
         {
+            if (BitConverter.IsLittleEndian == false)
+                throw new ArgumentException("Bitconverter is not converting to little endian!");
+
             List<ncaList> ncalist = new List<ncaList>();
             keyset = ExternalKeyReader.ReadKeyFile("prod.keys");
             /*
@@ -185,24 +188,32 @@ namespace EmmcHaccGen
             bcpkg2_3.DumpToFile("bcpkg2_3.testnew");
 
             Dictionary<string, List<ncaList>> test = SortNca(ncalist);
+            List<imen> imenlist = new List<imen>();
 
             foreach (KeyValuePair<string, List<ncaList>> hi in test)
             {
+                /*
                 Console.WriteLine($"Key: {hi.Key}");
 
                 foreach (ncaList hi2 in hi.Value)
                 {
                     Console.WriteLine($"^- {hi2.filename} {hi2.type}");
                 }
+                */
+                imen newimen = new imen(keyset, hi.Value);
+                newimen.Gen();
+                imenlist.Add(newimen);
             }
-
-            imen test2 = new imen(keyset, test.ElementAt(1).Value);
-            //test2.GetCnmt($"9.1.0\\{test.ElementAt(0).Value[0].filename}");
-            test2.Gen();
-
-
-
             /*
+            imen testimen = new imen(keyset, test["0100000000000816"]);
+            testimen.Gen();
+            //imen test2 = new imen(keyset, test.ElementAt(0).Value);
+            //test2.GetCnmt($"9.1.0\\{test.ElementAt(0).Value[0].filename}");
+            //test2.Gen();
+
+
+
+            
             foreach (var entry in ncalist)
             {
                 Console.WriteLine($"File: {entry.filename}, TitleID: {entry.titleid}, Type: {entry.type}");

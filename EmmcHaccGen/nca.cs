@@ -16,6 +16,7 @@ namespace EmmcHaccGen
         public NcaContentType type;
         public Cnmt cnmt;
         public byte[] raw_cnmt;
+        public long size;
 
         public ncaList()
         {

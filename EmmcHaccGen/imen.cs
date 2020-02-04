@@ -19,6 +19,8 @@ namespace EmmcHaccGen
         //private byte[] cnmt_raw;
         private List<ncaList> pair;
         private int offset = 0x20;
+        private CnmtRawParser cnmtRawParser;
+
 
         public imen() { }
 
@@ -33,11 +35,14 @@ namespace EmmcHaccGen
 
         public void Gen()
         {
+            cnmtRawParser = new CnmtRawParser(pair[0].raw_cnmt);
+            cnmtRawParser.Parse();
+
             GenKey();
             GenValue();
-            Console.WriteLine($"Titleid: {pair[0].titleid}");
-            Console.WriteLine($"{BitConverter.ToString(key.ToArray()).Replace("-", "")}");
-            Console.WriteLine($"{BitConverter.ToString(value.ToArray()).Replace("-", "").ToLower()}");
+            
+            Console.WriteLine($"{pair[0].titleid.ToLower()}: {BitConverter.ToString(key.ToArray()).Replace("-", "").ToLower()} {BitConverter.ToString(value.ToArray()).Replace("-", "").ToLower()}");
+            //Console.WriteLine($"{BitConverter.ToUInt64(test.raw_title_id)} {pair[0].cnmt.TitleId}");
             //'0000020000000000dab17bb26feb93ad1523d55a7b59f6e9000e00000000000000ae6772e51a6a19e9d0a45a2ca2e8450068110000000100'
 
             /*
@@ -61,7 +66,7 @@ namespace EmmcHaccGen
         }
         private void GenValue()
         {
-            
+            /*
             UInt16 raw_ext_header_size = BitConverter.ToUInt16(pair[0].raw_cnmt, 0xE);
             value.AddRange(BitConverter.GetBytes(raw_ext_header_size));
             value.AddRange(BitConverter.GetBytes((UInt16)(pair[0].cnmt.ContentEntryCount + 1)));
@@ -78,10 +83,36 @@ namespace EmmcHaccGen
 
                 value.AddRange(ext_header_size.ToList());
             }
+            */
+            value.AddRange(cnmtRawParser.raw_ext_header_size);
+            value.AddRange(BitConverter.GetBytes((UInt16)(cnmtRawParser.content_count + 1)));
+            value.AddRange(BitConverter.GetBytes((UInt16)(cnmtRawParser.content_meta_count)));
+            value.Add(cnmtRawParser.raw_content_meta_attribs);
+            value.Add(0);
+
+            if (cnmtRawParser.ext_header_loaded_size > 0)
+            {
+                value.AddRange(BitConverter.GetBytes(cnmtRawParser.ext_header_loaded_size));
+            }
 
             AddContentValue(0);
-            AddContentValue(1);
+            if (cnmtRawParser.content_count >= 1)
+                AddContentValue(1);
 
+            for (int i = 0; i < cnmtRawParser.content_meta_count; i++)
+            {
+                value.AddRange(cnmtRawParser.meta[i].GetRawRecord());
+            }
+            
+            if (cnmtRawParser.ext_data != null)
+            {
+                value.AddRange(cnmtRawParser.ext_data);
+                //value.AddRange(BitConverter.GetBytes((uint)cnmtRawParser.ext_data.Length));
+            }
+                
+
+            
+            
 
             // Add Content info
             // Add content_meta info
@@ -92,13 +123,18 @@ namespace EmmcHaccGen
         }
         private void AddContentValue(int number)
         {
-            value.AddRange(Enumerable.Range(0, pair[number].filename.Length - 4).Where(x => x % 2 == 0).Select(x => Convert.ToByte(pair[number].filename.Substring(x, 2), 16)));
+            
             if (number == 0)
             {
+                value.AddRange(Enumerable.Range(0, pair[number].filename.Length - 4).Where(x => x % 2 == 0).Select(x => Convert.ToByte(pair[number].filename.Substring(x, 2), 16)));
                 //value.AddRange(BitConverter.GetBytes(0x000e00000000));
 
-                value.Add(0);
-                value.Add(0xe);
+                
+
+                value.AddRange(BitConverter.GetBytes((UInt16)pair[number].size));
+
+                //value.Add(0xe);
+                //value.Add(0);
                 value.Add(0);
                 value.Add(0);
                 value.Add(0);
@@ -110,13 +146,168 @@ namespace EmmcHaccGen
             else
             {
                 //todo: cnmt needs rawparser
+                /*
                 value.AddRange(BitConverter.GetBytes(BitConverter.ToUInt16(pair[0].raw_cnmt, offset + 0x30)));
                 value.AddRange(BitConverter.GetBytes(BitConverter.ToUInt16(pair[0].raw_cnmt, offset + 0x32)));
                 value.AddRange(BitConverter.GetBytes(BitConverter.ToUInt16(pair[0].raw_cnmt, offset + 0x34)));
 
                 value.Add((Byte)pair[0].cnmt.ContentEntries[0].Type);
                 value.Add(0);
+                */
+
+                foreach(var temp in cnmtRawParser.content)
+                {
+                    value.AddRange(temp.GetRawRecord());
+                }
             }
+        }
+    }
+
+    class CnmtRawParser
+    {
+        private byte[] raw_cnmt;
+        public byte[] raw_title_id, raw_title_version, raw_ext_header_size, raw_content_count, raw_content_meta_count, raw_req_dl_system_version, ext_data;
+        public uint ext_header_size, ext_header_loaded_size, content_count, content_meta_count;
+        public byte raw_content_meta_type, raw_content_meta_attribs;
+        private uint offset = 0x20;
+        public List<RawContentRecord> content;
+        public List<RawMetaContentRecord> meta;
+
+        public CnmtRawParser() { }
+
+        public CnmtRawParser(byte[] raw_cnmt)
+        {
+            this.raw_cnmt = raw_cnmt;
+            content = new List<RawContentRecord>();
+            meta = new List<RawMetaContentRecord>();
+        }
+
+        public void Parse()
+        {
+            raw_title_id = ReadFromOffset(0x8, 0x0);
+            raw_title_version = ReadFromOffset(0x4, 0x8);
+            raw_content_meta_type = raw_cnmt[0xC];
+            raw_ext_header_size = ReadFromOffset(0x2, 0xE);
+            raw_content_count = ReadFromOffset(0x2, 0x10);
+            raw_content_meta_count = ReadFromOffset(0x2, 0x12);
+            raw_content_meta_attribs = raw_cnmt[0x14];
+            raw_req_dl_system_version = ReadFromOffset(0x4, 0x18);
+
+            ext_header_size = BitConverter.ToUInt16(raw_ext_header_size, 0);
+            content_count = BitConverter.ToUInt16(raw_content_count);
+            content_meta_count = BitConverter.ToUInt16(raw_content_meta_count);
+
+            if (ext_header_size > 0)
+            {
+                ext_header_loaded_size = BitConverter.ToUInt32(ReadFromOffset(ext_header_size, offset));
+                offset += ext_header_size;
+            }
+
+            for (int i = 0; i < content_count; i++)
+            {
+                RawContentRecord temp = new RawContentRecord(ReadFromOffset(0x38, offset));
+                offset += 0x38;
+                temp.Parse();
+                content.Add(temp);
+            }
+
+            for (int i = 0; i < content_meta_count; i++)
+            {
+                RawMetaContentRecord temp = new RawMetaContentRecord(ReadFromOffset(0x10, offset));
+                offset += 0x10;
+                temp.Parse();
+                meta.Add(temp);
+            }
+
+            if (ext_header_loaded_size > 0)
+            {
+                ext_data = ReadFromOffset(ext_header_loaded_size, offset);
+                offset += ext_header_loaded_size;
+            }
+                
+        }
+        private byte[] ReadFromOffset(uint amount, uint offset)
+        {
+            byte[] temp = new byte[amount];
+            for (int i = 0; i < amount; i++)
+                temp[i] = raw_cnmt[i + offset];
+            return temp;
+        }
+    }
+
+    class RawContentRecord
+    {
+        private byte[] record;
+        public byte[] raw_hash, raw_content_id, raw_size;
+        public byte raw_content_type, raw_id_offset;
+
+        public RawContentRecord() { }
+
+        public RawContentRecord(byte[] record)
+        {
+            this.record = record;
+        }
+
+        public void Parse()
+        {
+            raw_hash = ReadFromOffset(0x20, 0x0);
+            raw_content_id = ReadFromOffset(0x10, 0x20);
+            raw_size = ReadFromOffset(0x6, 0x30);
+            raw_content_type = record[0x36];
+            raw_id_offset = record[0x37];
+        }
+        private byte[] ReadFromOffset(int amount, int offset)
+        {
+            byte[] temp = new byte[amount];
+            for (int i = 0; i < amount; i++)
+                temp[i] = record[i + offset];
+            return temp;
+        }
+        public byte[] GetRawRecord()
+        {
+            List<byte> temp = new List<byte>();
+            temp.AddRange(raw_content_id);
+            temp.AddRange(raw_size);
+            temp.Add(raw_content_type);
+            temp.Add(raw_id_offset);
+            return temp.ToArray();
+        }
+    }
+    class RawMetaContentRecord
+    {
+        private byte[] record;
+        public byte[] raw_title_id, raw_version, raw_content_meta_attribs;
+        public byte raw_content_meta_type;
+
+        public RawMetaContentRecord() { }
+
+        public RawMetaContentRecord(byte[] record)
+        {
+            this.record = record;
+        }
+
+        public void Parse()
+        {
+            raw_title_id = ReadFromOffset(0x8, 0x0);
+            raw_version = ReadFromOffset(0x4, 0x8);
+            raw_content_meta_type = record[0xC];
+            raw_content_meta_attribs = ReadFromOffset(0x3, 0xD);
+        }
+        private byte[] ReadFromOffset(int amount, int offset)
+        {
+            byte[] temp = new byte[amount];
+            for (int i = 0; i < amount; i++)
+                temp[i] = record[i + offset];
+            return temp;
+        }
+        public byte[] GetRawRecord()
+        {
+            List<byte> temp = new List<byte>();
+            temp.AddRange(raw_title_id);
+            temp.AddRange(raw_version);
+            temp.Add(raw_content_meta_type);
+            temp.AddRange(raw_content_meta_attribs);
+            return temp.ToArray();
         }
     }
 }
