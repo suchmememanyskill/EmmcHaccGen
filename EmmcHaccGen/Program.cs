@@ -22,6 +22,21 @@ namespace EmmcHaccGen
                 Nca nca = new Nca(keyset, infile);
                 entry.titleid = $"{nca.Header.TitleId:X16}";
                 entry.type = nca.Header.ContentType;
+
+                if (entry.type == NcaContentType.Meta)
+                {
+                    using (IFileSystem fs = nca.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.ErrorOnInvalid))
+                    {
+                        string cnmtPath = fs.EnumerateEntries("/", "*.cnmt").Single().FullPath;
+                        IFile tempfile;
+                        fs.OpenFile(out tempfile, cnmtPath, OpenMode.Read).ThrowIfFailure();
+                        entry.cnmt = new Cnmt(tempfile.AsStream());
+                        tempfile.GetSize(out long size);
+                        entry.raw_cnmt = new byte[size];
+                        tempfile.Read(out long temp, 0, entry.raw_cnmt);
+                        tempfile.Dispose();
+                    }
+                }
             }
 
             return entry;
@@ -95,6 +110,13 @@ namespace EmmcHaccGen
                 }
             }
 
+            for (int i = 0; i < NcaDict.Count; i++)
+            {
+                var ncalist = NcaDict.ElementAt(i);
+                var ncalistsorted = ncalist.Value.OrderBy(i => i.type != NcaContentType.Meta).ToList();
+                NcaDict[ncalist.Key] = ncalistsorted;
+            }
+
             return NcaDict;
         }
         static void Main(string[] args)
@@ -161,6 +183,24 @@ namespace EmmcHaccGen
             bcpkg2_3.Pad(0x40000);
             bcpkg2_3.Write(SafeExtractor.pkg2);
             bcpkg2_3.DumpToFile("bcpkg2_3.testnew");
+
+            Dictionary<string, List<ncaList>> test = SortNca(ncalist);
+
+            foreach (KeyValuePair<string, List<ncaList>> hi in test)
+            {
+                Console.WriteLine($"Key: {hi.Key}");
+
+                foreach (ncaList hi2 in hi.Value)
+                {
+                    Console.WriteLine($"^- {hi2.filename} {hi2.type}");
+                }
+            }
+
+            imen test2 = new imen(keyset, test.ElementAt(1).Value);
+            //test2.GetCnmt($"9.1.0\\{test.ElementAt(0).Value[0].filename}");
+            test2.Gen();
+
+
 
             /*
             foreach (var entry in ncalist)
@@ -245,7 +285,7 @@ namespace EmmcHaccGen
             foreach(KeyValuePair<string, List<ncaList>> hi in test)
             {
                 Console.WriteLine($"Key: {hi.Key}");
-                
+
                 foreach(ncaList hi2 in hi.Value)
                 {
                     Console.WriteLine($"^- {hi2.filename} {hi2.type}");
@@ -262,9 +302,9 @@ namespace EmmcHaccGen
                         }
                     }
                 }
-                
-                
-                
+
+
+
 
 
                 //tempncafilesystem.Dispose();

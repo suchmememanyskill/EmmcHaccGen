@@ -14,12 +14,15 @@ namespace EmmcHaccGen
         public string filename;
         public string titleid;
         public NcaContentType type;
+        public Cnmt cnmt;
+        public byte[] raw_cnmt;
 
         public ncaList()
         {
             filename = "";
             titleid = "";
             type = NcaContentType.Control;
+            cnmt = null;
         }
     }
 
