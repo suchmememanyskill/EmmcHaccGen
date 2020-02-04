@@ -10,6 +10,51 @@ using LibHac.Ncm;
 
 namespace EmmcHaccGen
 {
+    class imkv
+    {
+        public List<imen> imenlist;
+        public List<byte> bytes;
+
+        public imkv() { }
+
+        public imkv(List<imen> imenlist)
+        {
+            this.imenlist = imenlist;
+            bytes = new List<byte>();
+        }
+
+        public void Build()
+        {
+            bytes.Add(0x49);
+            bytes.Add(0x4D);
+            bytes.Add(0x4B);
+            bytes.Add(0x56);
+
+            bytes.Add(0x0);
+            bytes.Add(0x0);
+            bytes.Add(0x0);
+            bytes.Add(0x0);
+
+            bytes.AddRange(BitConverter.GetBytes((uint)imenlist.Count));
+            foreach (var single in imenlist)
+            {
+                bytes.AddRange(single.bytes);
+            }
+        }
+
+        public void DumpToFile(string path)
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+
+            using (Stream file = File.OpenWrite(path))
+            {
+                file.Write(bytes.ToArray(), 0, bytes.Count);
+            }
+
+            Console.WriteLine($"Wrote 0x{bytes.Count:x8} to {path}");
+        }
+    }
     class imen
     {
         public List<Byte> bytes;
@@ -41,7 +86,7 @@ namespace EmmcHaccGen
             GenKey();
             GenValue();
             
-            Console.WriteLine($"{pair[0].titleid.ToLower()}: {BitConverter.ToString(key.ToArray()).Replace("-", "").ToLower()} {BitConverter.ToString(value.ToArray()).Replace("-", "").ToLower()}");
+            //Console.WriteLine($"{pair[0].titleid.ToLower()}: {BitConverter.ToString(key.ToArray()).Replace("-", "").ToLower()} {BitConverter.ToString(value.ToArray()).Replace("-", "").ToLower()}");
             //Console.WriteLine($"{BitConverter.ToUInt64(test.raw_title_id)} {pair[0].cnmt.TitleId}");
             //'0000020000000000dab17bb26feb93ad1523d55a7b59f6e9000e00000000000000ae6772e51a6a19e9d0a45a2ca2e8450068110000000100'
 
@@ -51,6 +96,18 @@ namespace EmmcHaccGen
             self.raw.size == nca.header.size
 
             */
+
+            bytes.Add(0x49);
+            bytes.Add(0x4D);
+            bytes.Add(0x45);
+            bytes.Add(0x4E);
+
+            bytes.AddRange(BitConverter.GetBytes((UInt32)key.Count));
+            bytes.AddRange(BitConverter.GetBytes((UInt32)value.Count));
+            bytes.AddRange(key);
+            bytes.AddRange(value);
+
+            Console.WriteLine($"{pair[0].titleid.ToLower()}: {BitConverter.ToString(bytes.ToArray()).Replace("-", "").ToLower()}");
         }
         private void GenKey()
         {
@@ -127,6 +184,7 @@ namespace EmmcHaccGen
             if (number == 0)
             {
                 value.AddRange(Enumerable.Range(0, pair[number].filename.Length - 4).Where(x => x % 2 == 0).Select(x => Convert.ToByte(pair[number].filename.Substring(x, 2), 16)));
+                //value.AddRange(BitConverter.GetBytes(Convert.ToUInt16(pair[number].filename.Substring(0, pair[number].filename.Length - 4), 16)));
                 //value.AddRange(BitConverter.GetBytes(0x000e00000000));
 
                 

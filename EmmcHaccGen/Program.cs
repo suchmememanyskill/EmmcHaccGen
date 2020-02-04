@@ -6,6 +6,7 @@ using LibHac.Fs;
 using LibHac.FsSystem;
 using System.IO;
 using System.Linq;
+using LibHac.FsSystem.Save;
 
 namespace EmmcHaccGen
 {
@@ -94,12 +95,16 @@ namespace EmmcHaccGen
             Pad(ref bytelist, (0x800000 - tempByte.Length - extrapaddingsize));
         }
         */
-        Dictionary<string, List<ncaList>> SortNca(List<ncaList> list)
+        Dictionary<string, List<ncaList>> SortNca(List<ncaList> list, List<string> forbiddenlist)
         {
             Dictionary<string, List<ncaList>> NcaDict = new Dictionary<string, List<ncaList>>();
+            Dictionary<string, List<ncaList>> SortedNcaDict = new Dictionary<string, List<ncaList>>();
 
             foreach (ncaList nca in list)
             {
+                if (forbiddenlist.Contains(nca.titleid))
+                    continue;
+
                 if (NcaDict.ContainsKey(nca.titleid))
                     NcaDict[nca.titleid].Add(nca);
                 else
@@ -116,8 +121,12 @@ namespace EmmcHaccGen
                 var ncalistsorted = ncalist.Value.OrderBy(i => i.type != NcaContentType.Meta).ToList();
                 NcaDict[ncalist.Key] = ncalistsorted;
             }
+            //            Console.WriteLine($"{Convert.ToInt32("3A3B3C", 16)}");
 
-            return NcaDict;
+            foreach (var item in NcaDict.OrderBy(x => Convert.ToInt64(x.Key, 16)))
+                SortedNcaDict.Add(item.Key, item.Value);
+
+            return SortedNcaDict;
         }
         static void Main(string[] args)
         {
@@ -149,8 +158,20 @@ namespace EmmcHaccGen
                 ncalist.Add(parseNca(file.Substring("9.1.0".Length + 1), file.ToString()));
             }
 
-            ncaList Normal = ncalist.Find(x => x.titleid == "0100000000000819" && x.type == NcaContentType.Data);
-            ncaList Safe = ncalist.Find(x => x.titleid == "010000000000081A" && x.type == NcaContentType.Data);
+            ncaList Normal = ncalist.Find(x => x.titleid == "010000000000081B" && x.type == NcaContentType.Data);
+            ncaList Safe = ncalist.Find(x => x.titleid == "010000000000081C" && x.type == NcaContentType.Data);
+            /*
+            List<string> forbiddenlist = new List<string>() 
+            {
+                "010000000000081B",
+                "010000000000081C"
+            };
+            */
+            List<string> forbiddenlist = new List<string>()
+            {
+                //"0100000000000819",
+                //"010000000000081A"
+            };
 
             ncaBisExtractor NormalExtractor = new ncaBisExtractor($"9.1.0\\{Normal.filename}", keyset);
             ncaBisExtractor SafeExtractor = new ncaBisExtractor($"9.1.0\\{Safe.filename}", keyset);
@@ -187,7 +208,7 @@ namespace EmmcHaccGen
             bcpkg2_3.Write(SafeExtractor.pkg2);
             bcpkg2_3.DumpToFile("bcpkg2_3.testnew");
 
-            Dictionary<string, List<ncaList>> test = SortNca(ncalist);
+            Dictionary<string, List<ncaList>> test = SortNca(ncalist, forbiddenlist);
             List<imen> imenlist = new List<imen>();
 
             foreach (KeyValuePair<string, List<ncaList>> hi in test)
@@ -204,6 +225,28 @@ namespace EmmcHaccGen
                 newimen.Gen();
                 imenlist.Add(newimen);
             }
+
+
+            imkv final = new imkv(imenlist);
+            final.Build();
+            final.DumpToFile("imkvdb.arc");
+
+            if (File.Exists("120.save"))
+                File.Delete("120.save");
+
+            File.Copy("save.stub", "120.save");
+
+            using (IStorage outfile = new LocalStorage("120.save", FileAccess.ReadWrite))
+            {
+                var save = new SaveDataFileSystem(keyset, outfile, IntegrityCheckLevel.ErrorOnInvalid, true);
+                save.OpenFile(out IFile file, "/meta/imkvdb.arc", OpenMode.AllowAppend | OpenMode.ReadWrite);
+                using (file)
+                {
+                    file.Write(0, final.bytes.ToArray(), WriteOption.Flush).ThrowIfFailure();
+                }
+                save.Commit(keyset);
+            }
+
             /*
             imen testimen = new imen(keyset, test["0100000000000816"]);
             testimen.Gen();
