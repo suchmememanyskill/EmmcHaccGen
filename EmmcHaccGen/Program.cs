@@ -74,47 +74,63 @@ namespace EmmcHaccGen
 
             return SortedNcaDict;
         }
-        static void Main(string[] args)
+        /// <summary>Generates required files to boot a switch. Generates BIS (boot01, bcpkg2) and the 120 system save</summary>
+        /// <param name="keys">Path to your prod.keys file. Required argument</param>
+        /// <param name="fw">Path to your firmware folder. Required argument</param>
+        /// <param name="noexfat">non-Exfat generation option. Default is false</param>
+        static void Main(string keys = null, string fw = null, bool noexfat = false)
         {
-            Console.WriteLine("Hello World!");
+            if (keys == null || fw == null)
+            {
+                Console.WriteLine("Missing arguments!\nType 'EmmcHaccGen.exe -h' for help");
+                return;
+            }
+
+            if (!File.Exists(keys))
+            {
+                Console.WriteLine("Keyset file not found.");
+                return;
+            }
+
+            Console.WriteLine("EmmcHaccGen started");
             Program yeet = new Program();
-            yeet.Start();
+            yeet.Start(keys, fw, noexfat);
         }
-        void Start()
+        void Start(string keys = null, string fw = null, bool noexfat = false)
         {
             if (BitConverter.IsLittleEndian == false)
                 throw new ArgumentException("Bitconverter is not converting to little endian!");
 
             List<ncaList> ncalist = new List<ncaList>();
-            keyset = ExternalKeyReader.ReadKeyFile("prod.keys");
+            keyset = ExternalKeyReader.ReadKeyFile(keys);
             bis boot0 = new bis(0x180000);
             bis boot1 = new bis(0x80000);
             bis bcpkg2_1 = new bis(0x800000);
             bis bcpkg2_3 = new bis(0x800000);
 
-            foreach (var file in Directory.EnumerateFiles("9.1.0", "*.nca"))
+            string NormalLoc = (noexfat) ? "0100000000000819" : "010000000000081B";
+            string SafeLoc = (noexfat) ? "010000000000081A" : "010000000000081C";
+            List<string> forbiddenlist = new List<string>();
+
+            if (noexfat)
             {
-                //Console.WriteLine(file.Substring("9.1.0".Length + 1));
-                ncalist.Add(parseNca(file.Substring("9.1.0".Length + 1), file.ToString()));
+                forbiddenlist.Add("010000000000081B");
+                forbiddenlist.Add("010000000000081C");
             }
 
-            ncaList Normal = ncalist.Find(x => x.titleid == "010000000000081B" && x.type == NcaContentType.Data);
-            ncaList Safe = ncalist.Find(x => x.titleid == "010000000000081C" && x.type == NcaContentType.Data);
-            /*
-            List<string> forbiddenlist = new List<string>() 
-            {
-                "010000000000081B",
-                "010000000000081C"
-            };
-            */
-            List<string> forbiddenlist = new List<string>()
-            {
-                //"0100000000000819",
-                //"010000000000081A"
-            };
+            Console.WriteLine($"Key path: {keys}\nFw folder path: {fw}\nExfat support: {!noexfat}\nNormalLoc: {NormalLoc}\nSafeLoc: {SafeLoc}\n");
 
-            ncaBisExtractor NormalExtractor = new ncaBisExtractor($"9.1.0\\{Normal.filename}", keyset);
-            ncaBisExtractor SafeExtractor = new ncaBisExtractor($"9.1.0\\{Safe.filename}", keyset);
+            Console.WriteLine($"Parsing Nca's.... (Count: {Directory.GetFiles(fw, "*.nca").Length})");
+            foreach (var file in Directory.EnumerateFiles(fw, "*.nca"))
+            {
+                ncalist.Add(parseNca(file.Substring(fw.Length + 1), file.ToString()));
+            }
+
+            ncaList Normal = ncalist.Find(x => x.titleid == NormalLoc && x.type == NcaContentType.Data);
+            ncaList Safe = ncalist.Find(x => x.titleid == SafeLoc && x.type == NcaContentType.Data);
+
+            ncaBisExtractor NormalExtractor = new ncaBisExtractor($"{fw}\\{Normal.filename}", keyset);
+            ncaBisExtractor SafeExtractor = new ncaBisExtractor($"{fw}\\{Safe.filename}", keyset);
 
             NormalExtractor.Extract();
             SafeExtractor.Extract();
@@ -179,8 +195,6 @@ namespace EmmcHaccGen
                 save.Commit(keyset);
             }
             Console.WriteLine($"Wrote save with an imvkdb size of 0x{final.bytes.Count:X4}");
-
-            Console.ReadKey();
         }
     }
 }
