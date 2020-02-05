@@ -195,12 +195,12 @@ namespace EmmcHaccGen
             bcpkg2_1.Pad(0x4000);
             bcpkg2_1.Write(NormalExtractor.pkg2);
             bcpkg2_1.DumpToFile($"{destFolder}/BCPKG2-1-Normal-Main.bin");
-            bcpkg2_1.DumpToFile($"{destFolder}/BCPKG2-1-Normal-Sub.bin");
+            bcpkg2_1.DumpToFile($"{destFolder}/BCPKG2-2-Normal-Sub.bin");
 
             bcpkg2_3.Pad(0x40000);
             bcpkg2_3.Write(SafeExtractor.pkg2);
             bcpkg2_3.DumpToFile($"{destFolder}/BCPKG2-3-SafeMode-Main.bin");
-            bcpkg2_3.DumpToFile($"{destFolder}/BCPKG2-3-SafeMode-Sub.bin");
+            bcpkg2_3.DumpToFile($"{destFolder}/BCPKG2-4-SafeMode-Sub.bin");
 
             Console.WriteLine("Copying files...");
             foreach (var file in Directory.EnumerateFiles(fw))
@@ -212,7 +212,7 @@ namespace EmmcHaccGen
             SetArchiveRecursively($"{destFolder}/SYSTEM");
             SetArchiveRecursively($"{destFolder}/USER");
 
-            Console.WriteLine("Making imkvdb...");
+            Console.WriteLine("Generating imkvdb...");
 
             Dictionary<string, List<ncaList>> SortedNcaPairDict = SortNca(ncalist, forbiddenlist);
             List<imen> imenlist = new List<imen>();
@@ -226,6 +226,7 @@ namespace EmmcHaccGen
 
             imkv final = new imkv(imenlist);
             final.Build();
+            //final.DumpToFile("imkvdb.arc");
 
             File.Copy("save.stub", $"{destFolder}/SYSTEM/save/8000000000000120", true);
 
@@ -237,7 +238,7 @@ namespace EmmcHaccGen
                 {
                     file.Write(0, final.bytes.ToArray(), WriteOption.Flush).ThrowIfFailure();
                 }
-                save.Commit(keyset);
+                save.Commit(keyset).ThrowIfFailure();
             }
             Console.WriteLine($"Wrote save with an imvkdb size of 0x{final.bytes.Count:X4}");
         }

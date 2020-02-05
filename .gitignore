@@ -30,6 +30,7 @@ bld/
 [Oo]bj/
 [Ll]og/
 Research
+EmmcHaccGen/Properties
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
