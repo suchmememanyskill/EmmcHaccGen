@@ -27,6 +27,46 @@ namespace EmmcHaccGen
         }
     }
 
+    class ncaVersionExtractor
+    {
+        public byte[] rawVersion;
+        public string versionString, platformString;
+        private Keyset keyset;
+
+        public ncaVersionExtractor() { }
+        public ncaVersionExtractor(string path, Keyset keyset)
+        {
+            this.keyset = keyset;
+            this.OpenNca(path);
+        }
+        public void Parse()
+        {
+            platformString = System.Text.Encoding.UTF8.GetString(ReadFromOffset(0x20, 0x8)).Trim('\0').ToLower();
+            versionString = System.Text.Encoding.UTF8.GetString(ReadFromOffset(0x18, 0x68)).Trim('\0').ToLower();
+        }
+        private byte[] ReadFromOffset(uint amount, uint offset)
+        {
+            byte[] temp = new byte[amount];
+            for (int i = 0; i < amount; i++)
+                temp[i] = rawVersion[i + offset];
+            return temp;
+        }
+        private void OpenNca(string path)
+        {
+            using (IStorage versionFile = new LocalStorage(path, FileAccess.Read))
+            {
+                Nca versionNca = new Nca(keyset, versionFile);
+                using (IFileSystem fs = versionNca.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.ErrorOnInvalid))
+                {
+                    fs.OpenFile(out IFile version, "file", OpenMode.Read).ThrowIfFailure();
+                    version.GetSize(out long ReadSize);
+                    rawVersion = new byte[ReadSize];
+                    version.Read(out long WriteBytes, 0, rawVersion);
+                }
+            }
+        }
+    }
+
     class ncaBisExtractor
     {
         public string path;

@@ -42,6 +42,18 @@ namespace EmmcHaccGen
 
             return entry;
         }
+        void SetArchiveRecursively(string path)
+        {
+            foreach(var file in Directory.EnumerateFiles(path))
+            {
+                File.SetAttributes(file, FileAttributes.Archive);
+            }
+            foreach(var folder in Directory.EnumerateDirectories(path))
+            {
+                File.SetAttributes(folder, 0);
+                SetArchiveRecursively(folder);
+            }
+        }
         Dictionary<string, List<ncaList>> SortNca(List<ncaList> list, List<string> forbiddenlist)
         {
             Dictionary<string, List<ncaList>> NcaDict = new Dictionary<string, List<ncaList>>();
@@ -107,6 +119,7 @@ namespace EmmcHaccGen
             bis boot1 = new bis(0x80000);
             bis bcpkg2_1 = new bis(0x800000);
             bis bcpkg2_3 = new bis(0x800000);
+            string destFolder;
 
             string NormalLoc = (noexfat) ? "0100000000000819" : "010000000000081B";
             string SafeLoc = (noexfat) ? "010000000000081A" : "010000000000081C";
@@ -128,9 +141,32 @@ namespace EmmcHaccGen
 
             ncaList Normal = ncalist.Find(x => x.titleid == NormalLoc && x.type == NcaContentType.Data);
             ncaList Safe = ncalist.Find(x => x.titleid == SafeLoc && x.type == NcaContentType.Data);
+            ncaList Version = ncalist.Find(x => x.titleid == "0100000000000809" && x.type == NcaContentType.Data);
 
-            ncaBisExtractor NormalExtractor = new ncaBisExtractor($"{fw}\\{Normal.filename}", keyset);
-            ncaBisExtractor SafeExtractor = new ncaBisExtractor($"{fw}\\{Safe.filename}", keyset);
+            ncaVersionExtractor versionExtractor = new ncaVersionExtractor($"{fw}/{Version.filename}", keyset);
+            versionExtractor.Parse();
+            Console.WriteLine($"Detected: {versionExtractor.platformString}-{versionExtractor.versionString}");
+            destFolder = $"{versionExtractor.platformString}-{versionExtractor.versionString}";
+            if (!noexfat)
+                destFolder += "_EXFAT";
+
+            Console.WriteLine($"Making folder {destFolder} and subfolders...");
+            Directory.CreateDirectory(destFolder);
+            Directory.CreateDirectory($"{destFolder}/SAFE");
+            Directory.CreateDirectory($"{destFolder}/SYSTEM/Contents/placehld");
+            Directory.CreateDirectory($"{destFolder}/SYSTEM/Contents/registered");
+            Directory.CreateDirectory($"{destFolder}/SYSTEM/save");
+            Directory.CreateDirectory($"{destFolder}/USER/Album");
+            Directory.CreateDirectory($"{destFolder}/USER/Contents/placehld");
+            Directory.CreateDirectory($"{destFolder}/USER/Contents/registered");
+            Directory.CreateDirectory($"{destFolder}/USER/save");
+            Directory.CreateDirectory($"{destFolder}/USER/saveMeta");
+            Directory.CreateDirectory($"{destFolder}/USER/temp");
+
+
+            Console.WriteLine("Generating BIS...");
+            ncaBisExtractor NormalExtractor = new ncaBisExtractor($"{fw}/{Normal.filename}", keyset);
+            ncaBisExtractor SafeExtractor = new ncaBisExtractor($"{fw}/{Safe.filename}", keyset);
 
             NormalExtractor.Extract();
             SafeExtractor.Extract();
@@ -148,21 +184,35 @@ namespace EmmcHaccGen
             boot0.Pad(0x40000 - NormalExtractor.pkg1.Length);
             boot0.Write(NormalExtractor.pkg1);
             boot0.Pad(0x40000 - NormalExtractor.pkg1.Length);
-            boot0.DumpToFile("boot0.testnew");
+            boot0.DumpToFile($"{destFolder}/BOOT0.bin");
 
             boot1.Write(SafeExtractor.pkg1);
             boot1.Pad(0x40000 - SafeExtractor.pkg1.Length);
             boot1.Write(SafeExtractor.pkg1);
             boot1.Pad(0x40000 - SafeExtractor.pkg1.Length);
-            boot1.DumpToFile("boot1.testnew");
+            boot1.DumpToFile($"{destFolder}/BOOT1.bin");
 
             bcpkg2_1.Pad(0x4000);
             bcpkg2_1.Write(NormalExtractor.pkg2);
-            bcpkg2_1.DumpToFile("bcpkg2_1.testnew");
+            bcpkg2_1.DumpToFile($"{destFolder}/BCPKG2-1-Normal-Main.bin");
+            bcpkg2_1.DumpToFile($"{destFolder}/BCPKG2-1-Normal-Sub.bin");
 
             bcpkg2_3.Pad(0x40000);
             bcpkg2_3.Write(SafeExtractor.pkg2);
-            bcpkg2_3.DumpToFile("bcpkg2_3.testnew");
+            bcpkg2_3.DumpToFile($"{destFolder}/BCPKG2-3-SafeMode-Main.bin");
+            bcpkg2_3.DumpToFile($"{destFolder}/BCPKG2-3-SafeMode-Sub.bin");
+
+            Console.WriteLine("Copying files...");
+            foreach (var file in Directory.EnumerateFiles(fw))
+            {
+                File.Copy(file, $"{destFolder}/SYSTEM/Contents/registered/{file.Substring(fw.Length + 1)}", true);
+            }
+
+            Console.WriteLine("Setting archive bits...");
+            SetArchiveRecursively($"{destFolder}/SYSTEM");
+            SetArchiveRecursively($"{destFolder}/USER");
+
+            Console.WriteLine("Making imkvdb...");
 
             Dictionary<string, List<ncaList>> SortedNcaPairDict = SortNca(ncalist, forbiddenlist);
             List<imen> imenlist = new List<imen>();
@@ -174,17 +224,12 @@ namespace EmmcHaccGen
                 imenlist.Add(newimen);
             }
 
-
             imkv final = new imkv(imenlist);
             final.Build();
-            //final.DumpToFile("data.arc");
 
-            if (File.Exists("120.save"))
-                File.Delete("120.save");
+            File.Copy("save.stub", $"{destFolder}/SYSTEM/save/8000000000000120", true);
 
-            File.Copy("save.stub", "120.save");
-
-            using (IStorage outfile = new LocalStorage("120.save", FileAccess.ReadWrite))
+            using (IStorage outfile = new LocalStorage($"{destFolder}/SYSTEM/save/8000000000000120", FileAccess.ReadWrite))
             {
                 var save = new SaveDataFileSystem(keyset, outfile, IntegrityCheckLevel.ErrorOnInvalid, true);
                 save.OpenFile(out IFile file, "/meta/imkvdb.arc", OpenMode.AllowAppend | OpenMode.ReadWrite);
@@ -196,5 +241,7 @@ namespace EmmcHaccGen
             }
             Console.WriteLine($"Wrote save with an imvkdb size of 0x{final.bytes.Count:X4}");
         }
+
+
     }
 }
