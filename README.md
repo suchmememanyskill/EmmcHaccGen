@@ -25,3 +25,11 @@ Options:
 - Denn/Dennthecafebabe for being awesome in general and being the first in implementing imkv gen in [Vaporware](https://github.com/dennthecafebabe/vaporware) and [Pyhac](https://github.com/dennthecafebabe/pyhac)
 - Thealexbarney for making libhac, which is used in this project.
 
+# Table of working firmwares
+
+| Firmware version | Result |
+|:----------------:|:------:|
+| 1.0.0 -> 6.1.0   | Untested, will likely not work |
+| 6.2.0            | Does not work |
+| 7.0.0 -> 9.0.1   | Untested, files generated suggests it might work |
+| 9.1.0            | Works  |
