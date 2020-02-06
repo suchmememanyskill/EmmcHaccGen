@@ -131,6 +131,18 @@ namespace EmmcHaccGen
                 forbiddenlist.Add("010000000000081C");
             }
 
+            int convertCount = 0;
+            foreach (var foldername in Directory.GetDirectories(fw))
+            {
+                convertCount++;
+                File.Move($"{foldername}/00", $"{fw}/temp");
+                Directory.Delete(foldername);
+                File.Move($"{fw}/temp", foldername);
+            }
+
+            if (convertCount > 0)
+                Console.WriteLine($"Converted folder ncas to files (count: {convertCount})");
+
             Console.WriteLine($"Key path: {keys}\nFw folder path: {fw}\nExfat support: {!noexfat}\nNormalLoc: {NormalLoc}\nSafeLoc: {SafeLoc}\n");
 
             Console.WriteLine($"Parsing Nca's.... (Count: {Directory.GetFiles(fw, "*.nca").Length})");
@@ -146,9 +158,9 @@ namespace EmmcHaccGen
             ncaVersionExtractor versionExtractor = new ncaVersionExtractor($"{fw}/{Version.filename}", keyset);
             versionExtractor.Parse();
             Console.WriteLine($"Detected: {versionExtractor.platformString}-{versionExtractor.versionString}");
-            destFolder = $"{versionExtractor.platformString}-{versionExtractor.versionString}";
+            destFolder = $"{versionExtractor.platformString.ToUpper()}-{versionExtractor.versionString}";
             if (!noexfat)
-                destFolder += "_EXFAT";
+                destFolder += "_exFAT";
 
             Console.WriteLine($"Making folder {destFolder} and subfolders...");
             Directory.CreateDirectory(destFolder);
