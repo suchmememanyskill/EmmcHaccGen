@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
-VisualStudioVersion = 16.0.29613.14
+VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EmmcHaccGen", "EmmcHaccGen\EmmcHaccGen.csproj", "{CD123C08-708E-4D24-9540-83B74C667970}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmmcHaccGen", "EmmcHaccGen\EmmcHaccGen.csproj", "{FCBB8A2A-7304-4EAC-9740-4513165D2A76}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{CD123C08-708E-4D24-9540-83B74C667970}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CD123C08-708E-4D24-9540-83B74C667970}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CD123C08-708E-4D24-9540-83B74C667970}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CD123C08-708E-4D24-9540-83B74C667970}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FCBB8A2A-7304-4EAC-9740-4513165D2A76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCBB8A2A-7304-4EAC-9740-4513165D2A76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCBB8A2A-7304-4EAC-9740-4513165D2A76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCBB8A2A-7304-4EAC-9740-4513165D2A76}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {20B82539-82DB-42FA-B4BC-0279B90609F1}
+		SolutionGuid = {5E0D81C5-46E0-44E2-A8B8-7FEDBF53CE23}
 	EndGlobalSection
 EndGlobal

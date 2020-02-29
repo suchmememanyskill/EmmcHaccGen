@@ -1,260 +1,160 @@
 ﻿using System;
+using EmmcHaccGen.nca;
 using System.Collections.Generic;
 using LibHac;
-using LibHac.FsSystem.NcaUtils;
-using LibHac.Fs;
-using LibHac.FsSystem;
 using System.IO;
-using System.Linq;
+using EmmcHaccGen.bis;
+using EmmcHaccGen.imkv;
+using LibHac.Fs;
+using LibHac.FsSystem.NcaUtils;
+using LibHac.FsSystem;
 using LibHac.FsSystem.Save;
 
 namespace EmmcHaccGen
 {
     class Program
     {
-        Keyset keyset;
-        ncaList parseNca(string filename, string path)
+        static string[] FOLDERSTRUCTURE = new string[]
         {
-            ncaList entry = new ncaList();
-            entry.filename = filename;
-
-            using (IStorage infile = new LocalStorage(path, FileAccess.Read))
-            {
-                Nca nca = new Nca(keyset, infile);
-                entry.titleid = $"{nca.Header.TitleId:X16}";
-                entry.type = nca.Header.ContentType;
-                entry.size = nca.Header.NcaSize;
-                if (entry.type == NcaContentType.Meta)
-                {
-                    using (IFileSystem fs = nca.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.ErrorOnInvalid))
-                    {
-                        string cnmtPath = fs.EnumerateEntries("/", "*.cnmt").Single().FullPath;
-                        IFile tempfile;
-                        fs.OpenFile(out tempfile, cnmtPath, OpenMode.Read).ThrowIfFailure();
-                        entry.cnmt = new Cnmt(tempfile.AsStream());
-                        tempfile.GetSize(out long size);
-                        entry.raw_cnmt = new byte[size];
-                        tempfile.Read(out long temp, 0, entry.raw_cnmt);
-                        tempfile.Dispose();
-                    }
-                }
-            }
-
-            return entry;
-        }
+            "/SAFE",
+            "/SYSTEM/Contents/placehld",
+            "/SYSTEM/Contents/registered",
+            "/SYSTEM/save",
+            "/USER/Album",
+            "/USER/Contents/placehld",
+            "/USER/Contents/registered",
+            "/USER/save",
+            "/USER/saveMeta",
+            "/USER/temp"
+        };
         void SetArchiveRecursively(string path)
         {
-            foreach(var file in Directory.EnumerateFiles(path))
+            foreach (var file in Directory.EnumerateFiles(path))
             {
                 File.SetAttributes(file, FileAttributes.Archive);
             }
-            foreach(var folder in Directory.EnumerateDirectories(path))
+            foreach (var folder in Directory.EnumerateDirectories(path))
             {
                 File.SetAttributes(folder, 0);
                 SetArchiveRecursively(folder);
             }
         }
-        Dictionary<string, List<ncaList>> SortNca(List<ncaList> list, List<string> forbiddenlist)
+
+        /// <summary>
+        /// Generates boot files for the Nintendo Switch. Generates Boot01, bcpkg2 and the 120 system save.
+        /// </summary>
+        /// <param name="keys">Path to your keyset file</param>
+        /// <param name="fw">Path to your firmware folder</param>
+        /// <param name="noExfat">noExfat switch. Add this if you don't want exfat support. Disabled by default</param>
+        /// <param name="verbose">Enable verbose output. Disabled by default</param>
+        static void Main(string keys=null, string fw=null, bool noExfat=false, bool verbose=false)
         {
-            Dictionary<string, List<ncaList>> NcaDict = new Dictionary<string, List<ncaList>>();
-            Dictionary<string, List<ncaList>> SortedNcaDict = new Dictionary<string, List<ncaList>>();
+            Console.WriteLine("EmmcHaccGen started");
 
-            foreach (ncaList nca in list)
-            {
-                if (forbiddenlist.Contains(nca.titleid))
-                    continue;
-
-                if (NcaDict.ContainsKey(nca.titleid))
-                    NcaDict[nca.titleid].Add(nca);
-                else
-                {
-                    List<ncaList> templist = new List<ncaList>();
-                    templist.Add(nca);
-                    NcaDict.Add(nca.titleid, templist);
-                }
-            }
-
-            for (int i = 0; i < NcaDict.Count; i++)
-            {
-                var ncalist = NcaDict.ElementAt(i);
-                var ncalistsorted = ncalist.Value.OrderBy(i => i.type != NcaContentType.Meta).ToList();
-                NcaDict[ncalist.Key] = ncalistsorted;
-            }
-
-            foreach (var item in NcaDict.OrderBy(x => Convert.ToInt64(x.Key, 16)))
-                SortedNcaDict.Add(item.Key, item.Value);
-
-            return SortedNcaDict;
-        }
-        /// <summary>Generates required files to boot a switch. Generates BIS (boot01, bcpkg2) and the 120 system save</summary>
-        /// <param name="keys">Path to your prod.keys file. Required argument</param>
-        /// <param name="fw">Path to your firmware folder. Required argument</param>
-        /// <param name="noexfat">non-Exfat generation option. Default is false</param>
-        static void Main(string keys = null, string fw = null, bool noexfat = false)
-        {
             if (keys == null || fw == null)
             {
-                Console.WriteLine("Missing arguments!\nType 'EmmcHaccGen.exe -h' for help");
+                Console.WriteLine("Missing arguments. Type 'EmmcHaccGen.exe -h' for commandline usage");
                 return;
             }
 
             if (!File.Exists(keys))
             {
-                Console.WriteLine("Keyset file not found.");
+                Console.WriteLine("Keyset file not found");
                 return;
             }
 
-            Console.WriteLine("EmmcHaccGen started");
-            Program yeet = new Program();
-            yeet.Start(keys, fw, noexfat);
-        }
-        void Start(string keys = null, string fw = null, bool noexfat = false)
-        {
-            if (BitConverter.IsLittleEndian == false)
-                throw new ArgumentException("Bitconverter is not converting to little endian!");
-
-            List<ncaList> ncalist = new List<ncaList>();
-            keyset = ExternalKeyReader.ReadKeyFile(keys);
-            bis boot0 = new bis(0x180000);
-            bis boot1 = new bis(0x80000);
-            bis bcpkg2_1 = new bis(0x800000);
-            bis bcpkg2_3 = new bis(0x800000);
-            string destFolder;
-
-            string NormalLoc = (noexfat) ? "0100000000000819" : "010000000000081B";
-            string SafeLoc = (noexfat) ? "010000000000081A" : "010000000000081C";
-            List<string> forbiddenlist = new List<string>();
-
-            if (noexfat)
+            if (!Directory.Exists(fw))
             {
-                forbiddenlist.Add("010000000000081B");
-                forbiddenlist.Add("010000000000081C");
+                Console.WriteLine("Firmware path not found");
+                return;
             }
 
+            Program program = new Program();
+            program.Start(keys, fw, noExfat, verbose);
+        }
+        void Start(string keys, string fwPath, bool noExfat, bool verbose)
+        {
+            Config.keyset = ExternalKeyReader.ReadKeyFile(keys);
+            Config.fwPath = fwPath;
+            Config.noExfat = noExfat;
+            Config.normalBisId = (noExfat) ? "0100000000000819" : "010000000000081B";
+            Config.safeBisId = (noExfat) ? "010000000000081A" : "010000000000081C";
+            Config.verbose = verbose;
+
             int convertCount = 0;
-            foreach (var foldername in Directory.GetDirectories(fw))
+            foreach (var foldername in Directory.GetDirectories(fwPath))
             {
                 convertCount++;
-                File.Move($"{foldername}/00", $"{fw}/temp");
+                File.Move($"{foldername}/00", $"{fwPath}/temp");
                 Directory.Delete(foldername);
-                File.Move($"{fw}/temp", foldername);
+                File.Move($"{fwPath}/temp", foldername);
             }
 
             if (convertCount > 0)
                 Console.WriteLine($"Converted folder ncas to files (count: {convertCount})");
 
-            Console.WriteLine($"Key path: {keys}\nFw folder path: {fw}\nExfat support: {!noexfat}\nNormalLoc: {NormalLoc}\nSafeLoc: {SafeLoc}\n");
+            Console.WriteLine("Indexing nca files...\n");
 
-            Console.WriteLine($"Parsing Nca's.... (Count: {Directory.GetFiles(fw, "*.nca").Length})");
-            foreach (var file in Directory.EnumerateFiles(fw, "*.nca"))
-            {
-                ncalist.Add(parseNca(file.Substring(fw.Length + 1), file.ToString()));
-            }
+            NcaIndexer ncaIndex = new NcaIndexer();
 
-            ncaList Normal = ncalist.Find(x => x.titleid == NormalLoc && x.type == NcaContentType.Data);
-            ncaList Safe = ncalist.Find(x => x.titleid == SafeLoc && x.type == NcaContentType.Data);
-            ncaList Version = ncalist.Find(x => x.titleid == "0100000000000809" && x.type == NcaContentType.Data);
+            NcaFile versionNca = ncaIndex.FindNca("0100000000000809", NcaContentType.Data);
+            VersionExtractor versionExtractor = new VersionExtractor(versionNca);
 
-            ncaVersionExtractor versionExtractor = new ncaVersionExtractor($"{fw}/{Version.filename}", keyset);
-            versionExtractor.Parse();
-            Console.WriteLine($"Detected: {versionExtractor.platformString}-{versionExtractor.versionString}");
-            destFolder = $"{versionExtractor.platformString.ToUpper()}-{versionExtractor.versionString}";
-            if (!noexfat)
+            string destFolder = $"{versionExtractor.platform.ToUpper()}-{versionExtractor.version}";
+            if (!noExfat)
                 destFolder += "_exFAT";
 
-            Console.WriteLine($"Making folder {destFolder} and subfolders...");
-            Directory.CreateDirectory(destFolder);
-            Directory.CreateDirectory($"{destFolder}/SAFE");
-            Directory.CreateDirectory($"{destFolder}/SYSTEM/Contents/placehld");
-            Directory.CreateDirectory($"{destFolder}/SYSTEM/Contents/registered");
-            Directory.CreateDirectory($"{destFolder}/SYSTEM/save");
-            Directory.CreateDirectory($"{destFolder}/USER/Album");
-            Directory.CreateDirectory($"{destFolder}/USER/Contents/placehld");
-            Directory.CreateDirectory($"{destFolder}/USER/Contents/registered");
-            Directory.CreateDirectory($"{destFolder}/USER/save");
-            Directory.CreateDirectory($"{destFolder}/USER/saveMeta");
-            Directory.CreateDirectory($"{destFolder}/USER/temp");
+            Console.WriteLine("EmmcHaccGen will now generate firmware files using the following settings:\n" +
+                $"fw: {versionExtractor.platform}-{versionExtractor.version}\n" + 
+                $"Exfat Support: {!noExfat}\n" +
+                $"Key path: {keys}\n" +
+                $"Destination folder: {destFolder}\n");
 
+            if (verbose)
+                Console.WriteLine($"BisIds:\nNormal: {Config.normalBisId}\nSafe: {Config.safeBisId}\n");
 
-            Console.WriteLine("Generating BIS...");
-            ncaBisExtractor NormalExtractor = new ncaBisExtractor($"{fw}/{Normal.filename}", keyset);
-            ncaBisExtractor SafeExtractor = new ncaBisExtractor($"{fw}/{Safe.filename}", keyset);
+            // Folder creation
+            Console.WriteLine("\nCreating folders..");
 
-            NormalExtractor.Extract();
-            SafeExtractor.Extract();
+            foreach(string folder in FOLDERSTRUCTURE)
+                Directory.CreateDirectory($"{destFolder}{folder}");
 
-            boot0.Write(NormalExtractor.bct);
-            boot0.Pad(0x4000 - NormalExtractor.bct.Length);
-            boot0.Write(SafeExtractor.bct);
-            boot0.Pad(0x4000 - SafeExtractor.bct.Length);
-            boot0.Write(NormalExtractor.bct);
-            boot0.Pad(0x4000 - NormalExtractor.bct.Length);
-            boot0.Write(SafeExtractor.bct);
-            boot0.Pad(0x4000 - SafeExtractor.bct.Length);
-            boot0.Pad(0xF0000);
-            boot0.Write(NormalExtractor.pkg1);
-            boot0.Pad(0x40000 - NormalExtractor.pkg1.Length);
-            boot0.Write(NormalExtractor.pkg1);
-            boot0.Pad(0x40000 - NormalExtractor.pkg1.Length);
-            boot0.DumpToFile($"{destFolder}/BOOT0.bin");
+            // Bis creation
+            Console.WriteLine("\nGenerating bis..");
+            new BisAssembler(ref ncaIndex, destFolder);
 
-            boot1.Write(SafeExtractor.pkg1);
-            boot1.Pad(0x40000 - SafeExtractor.pkg1.Length);
-            boot1.Write(SafeExtractor.pkg1);
-            boot1.Pad(0x40000 - SafeExtractor.pkg1.Length);
-            boot1.DumpToFile($"{destFolder}/BOOT1.bin");
-
-            bcpkg2_1.Pad(0x4000);
-            bcpkg2_1.Write(NormalExtractor.pkg2);
-            bcpkg2_1.DumpToFile($"{destFolder}/BCPKG2-1-Normal-Main.bin");
-            bcpkg2_1.DumpToFile($"{destFolder}/BCPKG2-2-Normal-Sub.bin");
-
-            bcpkg2_3.Pad(0x40000);
-            bcpkg2_3.Write(SafeExtractor.pkg2);
-            bcpkg2_3.DumpToFile($"{destFolder}/BCPKG2-3-SafeMode-Main.bin");
-            bcpkg2_3.DumpToFile($"{destFolder}/BCPKG2-4-SafeMode-Sub.bin");
-
-            Console.WriteLine("Copying files...");
-            foreach (var file in Directory.EnumerateFiles(fw))
+            // Copy fw files
+            Console.WriteLine("\nCopying files...");
+            foreach (var file in Directory.EnumerateFiles(fwPath))
             {
-                File.Copy(file, $"{destFolder}/SYSTEM/Contents/registered/{file.Substring(fw.Length + 1)}", true);
+                File.Copy(file, $"{destFolder}/SYSTEM/Contents/registered/{file.Substring(fwPath.Length + 1)}", true);
             }
 
-            Console.WriteLine("Setting archive bits...");
+            // Archive bit setting
+            Console.WriteLine("\nSetting archive bits..");
             SetArchiveRecursively($"{destFolder}/SYSTEM");
             SetArchiveRecursively($"{destFolder}/USER");
 
-            Console.WriteLine("Generating imkvdb...");
+            //Imkv generation
+            Console.WriteLine("\nGenerating imkv..");
+            Imkv imkvdb = new Imkv(ref ncaIndex);
 
-            Dictionary<string, List<ncaList>> SortedNcaPairDict = SortNca(ncalist, forbiddenlist);
-            List<imen> imenlist = new List<imen>();
-
-            foreach (var pair in SortedNcaPairDict)
-            {
-                imen newimen = new imen(pair.Value);
-                newimen.Gen();
-                imenlist.Add(newimen);
-            }
-
-            imkv final = new imkv(imenlist);
-            final.Build();
-            //final.DumpToFile("imkvdb.arc");
+            if (verbose)
+                imkvdb.DumpToFile($"{destFolder}/data.arc");
 
             File.Copy("save.stub", $"{destFolder}/SYSTEM/save/8000000000000120", true);
 
             using (IStorage outfile = new LocalStorage($"{destFolder}/SYSTEM/save/8000000000000120", FileAccess.ReadWrite))
             {
-                var save = new SaveDataFileSystem(keyset, outfile, IntegrityCheckLevel.ErrorOnInvalid, true);
+                var save = new SaveDataFileSystem(Config.keyset, outfile, IntegrityCheckLevel.ErrorOnInvalid, true);
                 save.OpenFile(out IFile file, "/meta/imkvdb.arc", OpenMode.AllowAppend | OpenMode.ReadWrite);
                 using (file)
                 {
-                    file.Write(0, final.bytes.ToArray(), WriteOption.Flush).ThrowIfFailure();
+                    file.Write(0, imkvdb.bytes.ToArray(), WriteOption.Flush).ThrowIfFailure();
                 }
-                save.Commit(keyset).ThrowIfFailure();
+                save.Commit(Config.keyset).ThrowIfFailure();
             }
-            Console.WriteLine($"Wrote save with an imvkdb size of 0x{final.bytes.Count:X4}");
+            Console.WriteLine($"Wrote save with an imvkdb size of 0x{imkvdb.bytes.Count:X4}");
         }
-
-
     }
 }

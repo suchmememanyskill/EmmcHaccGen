@@ -1,22 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using System.IO;
 using System.Linq;
+using System.IO;
 
-namespace EmmcHaccGen
+namespace EmmcHaccGen.bis
 {
-    class bis
+    class ByteHolder
     {
         public List<Byte> bytes;
-        public long remainingLength;
+        private long remainingLength;
 
-        public bis()
-        {
-            bytes = new List<byte>();
-        }
+        public ByteHolder() { }
 
-        public bis(long remainingLength)
+        public ByteHolder(long remainingLength)
         {
             this.remainingLength = remainingLength;
             bytes = new List<byte>();
@@ -29,7 +26,7 @@ namespace EmmcHaccGen
 
             remainingLength -= padamount;
         }
-        public void Write(Byte[] inbytes)
+        public void Write(byte[] inbytes)
         {
             bytes.AddRange(inbytes.ToList());
             remainingLength -= inbytes.Length;
@@ -46,7 +43,7 @@ namespace EmmcHaccGen
                 file.Write(bytes.ToArray(), 0, bytes.Count);
             }
 
-            Console.WriteLine($"Wrote 0x{bytes.Count:x8} to {path}");
+            Console.WriteLine($"Wrote 0x{bytes.Count:x8} bytes to {path}");
         }
     }
 }
