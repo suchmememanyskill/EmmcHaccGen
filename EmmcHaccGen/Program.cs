@@ -93,7 +93,7 @@ namespace EmmcHaccGen
             if (convertCount > 0)
                 Console.WriteLine($"Converted folder ncas to files (count: {convertCount})");
 
-            Console.WriteLine("Indexing nca files...\n");
+            Console.WriteLine("Indexing nca files...");
 
             NcaIndexer ncaIndex = new NcaIndexer();
 
@@ -104,14 +104,14 @@ namespace EmmcHaccGen
             if (!noExfat)
                 destFolder += "_exFAT";
 
-            Console.WriteLine("EmmcHaccGen will now generate firmware files using the following settings:\n" +
+            Console.WriteLine("\nEmmcHaccGen will now generate firmware files using the following settings:\n" +
                 $"fw: {versionExtractor.platform}-{versionExtractor.version}\n" + 
                 $"Exfat Support: {!noExfat}\n" +
                 $"Key path: {keys}\n" +
                 $"Destination folder: {destFolder}\n");
 
             if (verbose)
-                Console.WriteLine($"BisIds:\nNormal: {Config.normalBisId}\nSafe: {Config.safeBisId}\n");
+                Console.WriteLine($"BisIds:\nNormal: {Config.normalBisId}\nSafe:   {Config.safeBisId}\n");
 
             // Folder creation
             Console.WriteLine("\nCreating folders..");

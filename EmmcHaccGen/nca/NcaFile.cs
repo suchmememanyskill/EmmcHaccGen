@@ -30,6 +30,9 @@ namespace EmmcHaccGen.nca
 
         public void AddNcaInfo(string path)
         {
+            if (Config.verbose)
+                Console.WriteLine($"Parsing File:     {path}");
+
             infile = new LocalStorage(path, FileAccess.Read);
 
             data = new Nca(Config.keyset, infile);
@@ -53,10 +56,17 @@ namespace EmmcHaccGen.nca
         public void GetHash()
         {
             string toSplit = filename.Substring(0, filename.Length - 4);
+
+            if (toSplit.Contains(".cnmt"))
+                toSplit = toSplit.Substring(0, toSplit.Length - 5);
+
+            if (Config.verbose)
+                Console.WriteLine($"Parsing FileName: {toSplit}");
+
             List<byte> bytehash = new List<byte>();
 
             for (int i = 0; i < toSplit.Length; i += 2)
-                bytehash.Add(Convert.ToByte(toSplit.Substring(i, 2), 16));          
+                bytehash.Add(Convert.ToByte(toSplit.Substring(i, 2), 16));
 
             hash = bytehash.ToArray();
         }
