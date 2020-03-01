@@ -21,9 +21,9 @@ namespace EmmcHaccGen.bis
             bcpkg2_3 = new ByteHolder(0x800000);
             destFolder = dest;
 
-            this.Extract(ref files);
+            this.Assemble(ref files);
         }
-        private void Extract(ref NcaIndexer files)
+        private void Assemble(ref NcaIndexer files)
         {
             normal = new BisExtractor(files.FindNca(Config.normalBisId, NcaContentType.Data));
             safe = new BisExtractor(files.FindNca(Config.safeBisId, NcaContentType.Data));

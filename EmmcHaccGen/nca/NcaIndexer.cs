@@ -29,7 +29,7 @@ namespace EmmcHaccGen.nca
             foreach (var file in Directory.EnumerateFiles(path, "*.nca"))
             {
                 NcaFile ncaFile = new NcaFile();
-                ncaFile.filename = file.Substring(path.Length + 1);
+                ncaFile.filename = file.Split(new char[]{'/', '\\' } ).Last();
                 ncaFile.AddNcaInfo(file);
                 ncaFile.GetHash();
                 files.Add(ncaFile);
@@ -43,8 +43,8 @@ namespace EmmcHaccGen.nca
 
             if (Config.noExfat)
             {
-                exclude.Add("0100000000000819");
-                exclude.Add("010000000000081A");
+                exclude.Add("010000000000081B");
+                exclude.Add("010000000000081C");
             }
 
             foreach (var nca in files)
