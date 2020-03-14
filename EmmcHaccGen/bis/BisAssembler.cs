@@ -54,7 +54,7 @@ namespace EmmcHaccGen.bis
             bcpkg2_1.DumpToFile($"{destFolder}/BCPKG2-1-Normal-Main.bin");
             bcpkg2_1.DumpToFile($"{destFolder}/BCPKG2-2-Normal-Sub.bin");
 
-            bcpkg2_3.Pad(0x40000);
+            bcpkg2_3.Pad(0x4000);
             bcpkg2_3.Write(safe.pkg2);
             bcpkg2_3.DumpToFile($"{destFolder}/BCPKG2-3-SafeMode-Main.bin");
             bcpkg2_3.DumpToFile($"{destFolder}/BCPKG2-4-SafeMode-Sub.bin");

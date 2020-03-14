@@ -39,7 +39,19 @@ namespace EmmcHaccGen
                 SetArchiveRecursively(folder);
             }
         }
-
+        void ShowNcaIndex(ref NcaIndexer ncaIndex, string version)
+        {
+            Console.WriteLine($"\nVersion: {version}\nNcaCount: {ncaIndex.files.Count}\n");
+            foreach(KeyValuePair<string, List<NcaFile>> ncaPair in ncaIndex.sortedNcaDict)
+            {
+                Console.WriteLine($"Titleid: {ncaPair.Key}");
+                foreach(NcaFile file in ncaPair.Value)
+                {
+                    Console.WriteLine($"    - Nca: {file.filename} >> ID: {file.header.TitleId:x16}, Type: {file.header.ContentType}");
+                }
+                Console.WriteLine();
+            }
+        }
         /// <summary>
         /// Generates boot files for the Nintendo Switch. Generates Boot01, bcpkg2 and the 120 system save.
         /// </summary>
@@ -47,7 +59,8 @@ namespace EmmcHaccGen
         /// <param name="fw">Path to your firmware folder</param>
         /// <param name="noExfat">noExfat switch. Add this if you don't want exfat support. Disabled by default</param>
         /// <param name="verbose">Enable verbose output. Disabled by default</param>
-        static void Main(string keys=null, string fw=null, bool noExfat=false, bool verbose=false)
+        /// <param name="showNcaIndex">Show info about nca's, like it's titleid and type. Will not generate a firmware folder with this option enabled</param>
+        static void Main(string keys=null, string fw=null, bool noExfat=false, bool verbose=false, bool showNcaIndex=false)
         {
             Console.WriteLine("EmmcHaccGen started");
 
@@ -70,9 +83,9 @@ namespace EmmcHaccGen
             }
 
             Program program = new Program();
-            program.Start(keys, fw, noExfat, verbose);
+            program.Start(keys, fw, noExfat, verbose,showNcaIndex);
         }
-        void Start(string keys, string fwPath, bool noExfat, bool verbose)
+        void Start(string keys, string fwPath, bool noExfat, bool verbose, bool showNcaIndex)
         {
             Config.keyset = ExternalKeyReader.ReadKeyFile(keys);
             Config.fwPath = fwPath;
@@ -103,6 +116,12 @@ namespace EmmcHaccGen
             string destFolder = $"{versionExtractor.platform.ToUpper()}-{versionExtractor.version}";
             if (!noExfat)
                 destFolder += "_exFAT";
+
+            if (showNcaIndex)
+            {
+                ShowNcaIndex(ref ncaIndex, destFolder);
+                return;
+            }
 
             Console.WriteLine("\nEmmcHaccGen will now generate firmware files using the following settings:\n" +
                 $"fw: {versionExtractor.platform}-{versionExtractor.version}\n" + 
