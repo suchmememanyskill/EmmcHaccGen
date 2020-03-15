@@ -140,7 +140,8 @@ namespace EmmcHaccGen
 
             // Bis creation
             Console.WriteLine("\nGenerating bis..");
-            new BisAssembler(ref ncaIndex, destFolder);
+            BisAssembler bisAssembler = new BisAssembler(ref ncaIndex, destFolder);
+            BisFileAssembler bisFileAssembler = new BisFileAssembler($"{versionExtractor.platform.ToUpper()}-{versionExtractor.version}{((!noExfat) ? "_exFAT" : "")}", ref bisAssembler, $"{destFolder}/boot.bis");
 
             // Copy fw files
             Console.WriteLine("\nCopying files...");

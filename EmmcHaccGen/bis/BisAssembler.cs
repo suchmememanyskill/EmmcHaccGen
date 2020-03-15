@@ -19,6 +19,7 @@ namespace EmmcHaccGen.bis
             boot1 = new ByteHolder(0x80000);
             bcpkg2_1 = new ByteHolder(0x800000);
             bcpkg2_3 = new ByteHolder(0x800000);
+
             destFolder = dest;
 
             this.Assemble(ref files);
