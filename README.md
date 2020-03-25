@@ -8,16 +8,19 @@ Name may not be final
 Go to the [Releases](https://github.com/suchmememanyskill/EmmcHaccGen/releases) tab to grab yourself the latest release.
 ```
 EmmcHaccGen:
-  Generates required files to boot a switch. Generates BIS (boot01, bcpkg2) and the 120 system save
+  Generates boot files for the Nintendo Switch. Generates Boot01, bcpkg2 and the 120 system save.
 
 Usage:
   EmmcHaccGen [options]
 
 Options:
-  --keys <keys>    Path to your prod.keys file. Required argument
-  --fw <fw>        Path to your firmware folder. Required argument
-  --noexfat        non-Exfat generation option. Default is false
-  --version        Display version information
+  --keys <keys>       Path to your keyset file
+  --fw <fw>           Path to your firmware folder
+  --no-exfat          noExfat switch. Add this if you don't want exfat support. Disabled by default
+  --verbose           Enable verbose output. Disabled by default
+  --show-nca-index    Show info about nca's, like it's titleid and type. Will not generate a firmware folder with this option enabled
+  --version           Show version information
+  -?, -h, --help      Show help and usage information
 ```
 
 # Credits
