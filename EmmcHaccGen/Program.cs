@@ -9,6 +9,7 @@ using LibHac.Fs;
 using LibHac.FsSystem.NcaUtils;
 using LibHac.FsSystem;
 using LibHac.FsSystem.Save;
+using System.Linq;
 
 namespace EmmcHaccGen
 {
@@ -147,7 +148,7 @@ namespace EmmcHaccGen
             Console.WriteLine("\nCopying files...");
             foreach (var file in Directory.EnumerateFiles(fwPath))
             {
-                File.Copy(file, $"{destFolder}/SYSTEM/Contents/registered/{file.Substring(fwPath.Length + 1)}", true);
+                File.Copy(file, $"{destFolder}/SYSTEM/Contents/registered/{file.Split(new char[] { '/', '\\' }).Last()}", true);
             }
 
             // Archive bit setting
