@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using EmmcHaccGen.nca;
 using LibHac.Fs;
+using LibHac.Common;
 using LibHac.FsSystem;
 using LibHac.FsSystem.NcaUtils;
 
@@ -33,7 +34,7 @@ namespace EmmcHaccGen.bis
         {
             byte[] tempByte;
 
-            fs.OpenFile(out IFile file, path, OpenMode.Read);
+            fs.OpenFile(out IFile file, new U8Span(path), OpenMode.Read);
             file.GetSize(out long size);
             tempByte = new byte[size];
             file.Read(out long read, 0, tempByte);

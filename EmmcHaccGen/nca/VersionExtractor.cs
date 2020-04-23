@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using LibHac.FsSystem.NcaUtils;
 using LibHac.FsSystem;
+using LibHac.Common;
 
 namespace EmmcHaccGen.nca
 {
@@ -22,7 +23,7 @@ namespace EmmcHaccGen.nca
         {
             using IFileSystem fs = nca.data.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.ErrorOnInvalid);
 
-            fs.OpenFile(out IFile version, "file", OpenMode.Read).ThrowIfFailure();
+            fs.OpenFile(out IFile version, new U8Span("/file"), OpenMode.Read).ThrowIfFailure();
             version.GetSize(out long readSize);
             rawVersion = new byte[readSize];
             version.Read(out long temp, 0, rawVersion);

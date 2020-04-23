@@ -6,6 +6,7 @@ using System.IO;
 using EmmcHaccGen.bis;
 using EmmcHaccGen.imkv;
 using LibHac.Fs;
+using LibHac.Common;
 using LibHac.FsSystem.NcaUtils;
 using LibHac.FsSystem;
 using LibHac.FsSystem.Save;
@@ -84,7 +85,7 @@ namespace EmmcHaccGen
             }
 
             Program program = new Program();
-            program.Start(keys, fw, noExfat, verbose,showNcaIndex);
+            program.Start(keys, fw, noExfat, verbose, showNcaIndex);
         }
         void Start(string keys, string fwPath, bool noExfat, bool verbose, bool showNcaIndex)
         {
@@ -96,7 +97,7 @@ namespace EmmcHaccGen
             Config.verbose = verbose;
 
             int convertCount = 0;
-            foreach (var foldername in Directory.GetDirectories(fwPath))
+            foreach (var foldername in Directory.GetDirectories(fwPath, "*.nca"))
             {
                 convertCount++;
                 File.Move($"{foldername}/00", $"{fwPath}/temp");
@@ -157,7 +158,7 @@ namespace EmmcHaccGen
             SetArchiveRecursively($"{destFolder}/USER");
 
             //Imkv generation
-            Console.WriteLine("\nGenerating imkv..");
+            Console.WriteLine("\nGenerating imkvdb..");
             Imkv imkvdb = new Imkv(ref ncaIndex);
 
             if (verbose)
@@ -168,7 +169,7 @@ namespace EmmcHaccGen
             using (IStorage outfile = new LocalStorage($"{destFolder}/SYSTEM/save/8000000000000120", FileAccess.ReadWrite))
             {
                 var save = new SaveDataFileSystem(Config.keyset, outfile, IntegrityCheckLevel.ErrorOnInvalid, true);
-                save.OpenFile(out IFile file, "/meta/imkvdb.arc", OpenMode.AllowAppend | OpenMode.ReadWrite);
+                save.OpenFile(out IFile file, new U8Span("/meta/imkvdb.arc"), OpenMode.AllowAppend | OpenMode.ReadWrite);
                 using (file)
                 {
                     file.Write(0, imkvdb.bytes.ToArray(), WriteOption.Flush).ThrowIfFailure();

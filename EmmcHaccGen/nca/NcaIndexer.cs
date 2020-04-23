@@ -76,7 +76,18 @@ namespace EmmcHaccGen.nca
         public NcaFile FindNca(string titleid, NcaContentType type)
         {
             string titleID = titleid.ToUpper();
-            return files.Find(x => x.titleId == titleID && x.header.ContentType == type);
+            NcaFile file = files.Find(x => x.titleId == titleID && x.header.ContentType == type);
+            if (file == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Could not find specified Program Id ({titleID})");
+                if (!Config.noExfat)
+                    Console.WriteLine("Consider trying out the '--no-exfat' option");
+                Console.WriteLine("Is your firmware dump valid?");
+                Console.ResetColor();
+                Environment.Exit(0);
+            }
+            return file;
         }
     }
 }

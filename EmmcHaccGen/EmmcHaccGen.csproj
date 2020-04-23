@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -7,10 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LibHac" Version="0.9.0" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20104.2" />
-    <PackageReference Include="System.CommandLine.DragonFruit" Version="0.3.0-alpha.20104.2" />
-    <PackageReference Include="System.CommandLine.Rendering" Version="0.3.0-alpha.20104.2" />
+    <PackageReference Include="LibHac" Version="0.10.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20214.1" />
+    <PackageReference Include="System.CommandLine.DragonFruit" Version="0.3.0-alpha.20214.1" />
+    <PackageReference Include="System.CommandLine.Rendering" Version="0.3.0-alpha.20214.1" />
   </ItemGroup>
 
 </Project>

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using LibHac;
+using LibHac.Common;
 using LibHac.FsSystem.NcaUtils;
 using LibHac.Fs;
 using LibHac.FsSystem;
@@ -35,13 +36,25 @@ namespace EmmcHaccGen.nca
 
             infile = new LocalStorage(path, FileAccess.Read);
 
-            data = new Nca(Config.keyset, infile);
+            try
+            {
+                data = new Nca(Config.keyset, infile);
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Unable to create NCA class. Is your keyset file valid?");
+                Console.WriteLine($"Error: {e.Message}");
+                Console.ResetColor();
+                Environment.Exit(0);
+            }
+
             if (header.ContentType == NcaContentType.Meta)
             {
                 using IFileSystem fs = data.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.ErrorOnInvalid);
                 string cnmtPath = fs.EnumerateEntries("/", "*.cnmt").Single().FullPath;
 
-                fs.OpenFile(out IFile cnmtFile, cnmtPath, OpenMode.Read).ThrowIfFailure();
+                fs.OpenFile(out IFile cnmtFile, new U8Span(cnmtPath), OpenMode.Read).ThrowIfFailure();
                 cnmt = new Cnmt(cnmtFile.AsStream());
 
                 cnmtFile.GetSize(out long size);
