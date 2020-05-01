@@ -33,9 +33,11 @@ Options:
 | Firmware version | Result |
 |:----------------:|:------:|
 | 1.0.0            | Works (Only no-exfat) 
-| 2.0.0 -> 3.0.0   | Untested 
+| 2.0.0 -> 2.2.0   | Untested
+| 2.3.0            | Works
+| 3.0.0 -> 3.0.2   | Untested 
 | 4.0.0 -> 4.1.0   | Works 
 | 5.0.0 -> 6.1.0   | Untested 
 | 6.2.0            | Does not work 
 | 7.0.0 -> 8.1.0   | Untested 
-| 9.0.0 -> 9.1.0   | Works 
+| 9.0.0 -> 10.0.2  | Works 
