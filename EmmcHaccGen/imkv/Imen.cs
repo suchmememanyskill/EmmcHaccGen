@@ -112,7 +112,8 @@ namespace EmmcHaccGen.imkv
         }
         private void AddContentNca()
         {
-            value.AddRange(cnmtRaw.content[0].GetRawRecord());
+            value.AddRange(pair[1].hash);
+            value.AddRange(cnmtRaw.content[0].GetPartialRawRecord());
         }
     }
 }
