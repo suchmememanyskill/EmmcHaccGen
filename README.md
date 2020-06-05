@@ -38,6 +38,8 @@ Options:
 | 3.0.0 -> 3.0.2   | Untested 
 | 4.0.0 -> 4.1.0   | Works 
 | 5.0.0 -> 6.1.0   | Untested 
-| 6.2.0            | Does not work 
+| 6.2.0            | Does not work
 | 7.0.0 -> 8.1.0   | Untested 
-| 9.0.0 -> 10.0.2  | Works 
+| 9.0.0 -> 10.0.4  | Works 
+
+Note: It has been figured out why 6.2 is not functional, see the 6.2-fix branch
