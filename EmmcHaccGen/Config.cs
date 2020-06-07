@@ -9,6 +9,6 @@ namespace EmmcHaccGen
     {
         public static Keyset keyset;
         public static string normalBisId, safeBisId, fwPath;
-        public static bool noExfat, verbose;
+        public static bool noExfat, verbose, fixHashes;
     }
 }

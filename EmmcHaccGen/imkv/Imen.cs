@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using EmmcHaccGen.nca;
 using EmmcHaccGen.cnmt;
@@ -112,6 +113,9 @@ namespace EmmcHaccGen.imkv
         }
         private void AddContentNca()
         {
+            if (!cnmtRaw.content[0].raw_content_id.SequenceEqual(pair[1].hash))
+                throw new Exception("[IMEN] Invalid hash given");
+
             value.AddRange(cnmtRaw.content[0].GetRawRecord());
         }
     }

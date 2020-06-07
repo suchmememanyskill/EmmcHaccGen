@@ -62,7 +62,8 @@ namespace EmmcHaccGen
         /// <param name="noExfat">noExfat switch. Add this if you don't want exfat support. Disabled by default</param>
         /// <param name="verbose">Enable verbose output. Disabled by default</param>
         /// <param name="showNcaIndex">Show info about nca's, like it's titleid and type. Will not generate a firmware folder with this option enabled</param>
-        static void Main(string keys=null, string fw=null, bool noExfat=false, bool verbose=false, bool showNcaIndex=false)
+        /// <param name="fixHashes">Fix incorrect hashes in the source firmware folder. Off by default</param>
+        static void Main(string keys=null, string fw=null, bool noExfat=false, bool verbose=false, bool showNcaIndex=false, bool fixHashes=false)
         {
             Console.WriteLine("EmmcHaccGen started");
 
@@ -85,9 +86,9 @@ namespace EmmcHaccGen
             }
 
             Program program = new Program();
-            program.Start(keys, fw, noExfat, verbose, showNcaIndex);
+            program.Start(keys, fw, noExfat, verbose, showNcaIndex, fixHashes);
         }
-        void Start(string keys, string fwPath, bool noExfat, bool verbose, bool showNcaIndex)
+        void Start(string keys, string fwPath, bool noExfat, bool verbose, bool showNcaIndex, bool fixHashes)
         {
             Config.keyset = ExternalKeyReader.ReadKeyFile(keys);
             Config.fwPath = fwPath;
@@ -95,6 +96,7 @@ namespace EmmcHaccGen
             Config.normalBisId = (noExfat) ? "0100000000000819" : "010000000000081B";
             Config.safeBisId = (noExfat) ? "010000000000081A" : "010000000000081C";
             Config.verbose = verbose;
+            Config.fixHashes = fixHashes;
 
             int convertCount = 0;
             foreach (var foldername in Directory.GetDirectories(fwPath, "*.nca"))
