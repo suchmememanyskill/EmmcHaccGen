@@ -19,6 +19,7 @@ Options:
   --no-exfat          noExfat switch. Add this if you don't want exfat support. Disabled by default
   --verbose           Enable verbose output. Disabled by default
   --show-nca-index    Show info about nca's, like it's titleid and type. Will not generate a firmware folder with this option enabled
+  --fix-hashes        Fix incorrect hashes in the source firmware folder. Disabled by default
   --version           Show version information
   -?, -h, --help      Show help and usage information
 ```
@@ -38,8 +39,4 @@ Options:
 | 3.0.0 -> 3.0.2   | Untested 
 | 4.0.0 -> 4.1.0   | Works 
 | 5.0.0 -> 6.1.0   | Untested 
-| 6.2.0            | Does not work
-| 7.0.0 -> 8.1.0   | Untested 
-| 9.0.0 -> 10.0.4  | Works 
-
-Note: It has been figured out why 6.2 is not functional, see the 6.2-fix branch
+| 6.2.0 -> 10.0.4  | Works
