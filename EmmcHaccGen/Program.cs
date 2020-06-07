@@ -62,7 +62,7 @@ namespace EmmcHaccGen
         /// <param name="noExfat">noExfat switch. Add this if you don't want exfat support. Disabled by default</param>
         /// <param name="verbose">Enable verbose output. Disabled by default</param>
         /// <param name="showNcaIndex">Show info about nca's, like it's titleid and type. Will not generate a firmware folder with this option enabled</param>
-        /// <param name="fixHashes">Fix incorrect hashes in the source firmware folder. Off by default</param>
+        /// <param name="fixHashes">Fix incorrect hashes in the source firmware folder. Disabled by default</param>
         static void Main(string keys=null, string fw=null, bool noExfat=false, bool verbose=false, bool showNcaIndex=false, bool fixHashes=false)
         {
             Console.WriteLine("EmmcHaccGen started");
