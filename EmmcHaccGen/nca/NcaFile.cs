@@ -74,7 +74,7 @@ namespace EmmcHaccGen.nca
             string fileHash;
 
             if (Config.verbose)
-                Console.Write($"Hashing {filename}... ");
+                Console.Write($"Hashing File:     {filename}... ");
 
             using (SHA256 hasher = SHA256.Create())
             {
@@ -98,7 +98,8 @@ namespace EmmcHaccGen.nca
                 {
                     Console.WriteLine($"Renaming to {fileHash}.nca");
                     int indexOfLastSlash = path.LastIndexOfAny(new char[] { '\\', '/' });
-                    string newPath = $"{path.Substring(0, indexOfLastSlash + 1)}{fileHash}.nca";
+                    filename = $"{fileHash}.nca";
+                    string newPath = $"{path.Substring(0, indexOfLastSlash + 1)}{filename}";
                     File.Move(path, newPath);
                     path = newPath;
                 }

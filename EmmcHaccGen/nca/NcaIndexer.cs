@@ -26,7 +26,7 @@ namespace EmmcHaccGen.nca
 
         private void Indexer()
         {
-            foreach (var file in Directory.EnumerateFiles(path, "*.nca"))
+            foreach (var file in Directory.EnumerateFiles(path, "*.nca").ToArray())
             {
                 NcaFile ncaFile = new NcaFile();
                 ncaFile.filename = file.Split(new char[]{'/', '\\' } ).Last();
