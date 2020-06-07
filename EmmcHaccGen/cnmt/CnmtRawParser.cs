@@ -113,14 +113,6 @@ namespace EmmcHaccGen.cnmt
             temp.Add(raw_id_offset);
             return temp.ToArray();
         }
-        public byte[] GetPartialRawRecord()
-        {
-            List<byte> temp = new List<byte>();
-            temp.AddRange(raw_size);
-            temp.Add(raw_content_type);
-            temp.Add(raw_id_offset);
-            return temp.ToArray();
-        }
     }
     class RawMetaContentRecord
     {
