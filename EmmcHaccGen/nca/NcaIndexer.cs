@@ -30,8 +30,9 @@ namespace EmmcHaccGen.nca
             {
                 NcaFile ncaFile = new NcaFile();
                 ncaFile.filename = file.Split(new char[]{'/', '\\' } ).Last();
-                ncaFile.AddNcaInfo(file);
-                ncaFile.GetHash();
+                ncaFile.path = file;
+                ncaFile.GenHash();
+                ncaFile.AddNcaInfo();
                 files.Add(ncaFile);
             }
         }

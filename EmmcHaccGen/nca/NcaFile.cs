@@ -10,12 +10,14 @@ using System.IO;
 using System.Linq;
 using LibHac.FsSystem.Save;
 using EmmcHaccGen.cnmt;
+using System.Security.Cryptography;
 
 namespace EmmcHaccGen.nca
 {
     class NcaFile
     {
         public string filename;
+        public string path;
         public byte[] hash;
         public string titleId;
         public Nca data;
@@ -29,7 +31,7 @@ namespace EmmcHaccGen.nca
         public CnmtRawParser cnmt_raw;
         private IStorage infile;
 
-        public void AddNcaInfo(string path)
+        public void AddNcaInfo()
         {
             if (Config.verbose)
                 Console.WriteLine($"Parsing File:     {path}");
@@ -58,30 +60,59 @@ namespace EmmcHaccGen.nca
                 cnmt = new Cnmt(cnmtFile.AsStream());
 
                 cnmtFile.GetSize(out long size);
-                hash = new byte[size];
-                cnmtFile.Read(out long BytesRead, 0, hash);
+                byte[] cnmtRaw = new byte[size];
+                cnmtFile.Read(out long none, 0, cnmtRaw);
 
-                cnmt_raw = new CnmtRawParser(hash);
+                cnmt_raw = new CnmtRawParser(cnmtRaw);
             }
 
             titleId = header.TitleId.ToString("x16").ToUpper();
         }
-        public void GetHash()
+        public void GenHash()
         {
-            string toSplit = filename.Substring(0, filename.Length - 4);
-
-            if (toSplit.Contains(".cnmt"))
-                toSplit = toSplit.Substring(0, toSplit.Length - 5);
+            string fileNameHash = filename.Substring(0, 32);
+            string fileHash;
 
             if (Config.verbose)
-                Console.WriteLine($"Parsing FileName: {toSplit}");
+                Console.Write($"Hashing {filename}... ");
 
-            List<byte> bytehash = new List<byte>();
+            using (SHA256 hasher = SHA256.Create())
+            {
+                FileStream fileStream = File.OpenRead(path);
+                fileStream.Position = 0;
 
-            for (int i = 0; i < toSplit.Length; i += 2)
-                bytehash.Add(Convert.ToByte(toSplit.Substring(i, 2), 16));
+                hash = hasher.ComputeHash(fileStream).Take(16).ToArray();
+                fileStream.Close();
+            }
 
-            hash = bytehash.ToArray();
+            fileHash = BitConverter.ToString(hash).Replace("-", "").ToLower();
+
+            if (fileHash != fileNameHash)
+            {
+                if (Config.verbose)
+                    Console.WriteLine("FAIL!");
+
+                Console.Write($"Incorrect hash for file {filename}. ");
+
+                if (Config.fixHashes)
+                {
+                    Console.WriteLine($"Renaming to {fileHash}.nca");
+                    int indexOfLastSlash = path.LastIndexOfAny(new char[] { '\\', '/' });
+                    string newPath = $"{path.Substring(0, indexOfLastSlash + 1)}{fileHash}.nca";
+                    File.Move(path, newPath);
+                    path = newPath;
+                }
+                else
+                {
+                    Console.WriteLine("This firmware dump is fishy. Stopping execution. Use the commandline argument \'--fix-hashes\' to fix the filenames");
+                    Environment.Exit(1);
+                }
+            }
+            else
+            {
+                if (Config.verbose)
+                    Console.WriteLine("OK!");
+            }
         }
     }
 }
