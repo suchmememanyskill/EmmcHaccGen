@@ -16,8 +16,16 @@ namespace EmmcHaccGen.nca
         public VersionExtractor() { }
         public VersionExtractor(NcaFile nca)
         {
-            this.OpenVersionNca(nca);
-            this.Parse();
+            try
+            {
+                this.OpenVersionNca(nca);
+                this.Parse();
+            }
+            catch
+            {
+                platform = "ERR";
+                version = "Unkn";
+            }
         }
         private void OpenVersionNca(NcaFile nca)
         {

@@ -139,6 +139,18 @@ namespace EmmcHaccGen
             // Folder creation
             Console.WriteLine("\nCreating folders..");
 
+            if (Directory.Exists(destFolder))
+            {
+                Console.Write("Destenation folder already exists. Delete the old folder?\nY/N: ");
+                string input = Console.ReadLine();
+
+                if (input[0].ToString().ToLower() != "y")
+                    return;
+
+                Console.WriteLine($"Deleting {destFolder}");
+                Directory.Delete(destFolder, true);
+            }
+
             foreach(string folder in FOLDERSTRUCTURE)
                 Directory.CreateDirectory($"{destFolder}{folder}");
 
