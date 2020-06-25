@@ -23,8 +23,9 @@ namespace EmmcHaccGen.nca
             }
             catch
             {
-                platform = "ERR";
+                platform = "NX";
                 version = "Unkn";
+                Console.WriteLine("[Warning] Version extraction failed. Version is unknown");
             }
         }
         private void OpenVersionNca(NcaFile nca)
