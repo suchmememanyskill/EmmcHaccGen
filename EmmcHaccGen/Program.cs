@@ -114,10 +114,9 @@ namespace EmmcHaccGen
 
             NcaIndexer ncaIndex = new NcaIndexer();
 
-            NcaFile versionNca = ncaIndex.FindNca("0100000000000809", NcaContentType.Data);
-            VersionExtractor versionExtractor = new VersionExtractor(versionNca);
+            VersionExtractor versionExtractor = new VersionExtractor(ncaIndex.FindNca("0100000000000809", NcaContentType.Meta));
 
-            string destFolder = $"{versionExtractor.platform.ToUpper()}-{versionExtractor.version}";
+            string destFolder = $"NX-{versionExtractor.Version}";
             if (!noExfat)
                 destFolder += "_exFAT";
 
@@ -128,7 +127,7 @@ namespace EmmcHaccGen
             }
 
             Console.WriteLine("\nEmmcHaccGen will now generate firmware files using the following settings:\n" +
-                $"fw: {versionExtractor.platform}-{versionExtractor.version}\n" + 
+                $"fw: {versionExtractor.Version}\n" + 
                 $"Exfat Support: {!noExfat}\n" +
                 $"Key path: {keys}\n" +
                 $"Destination folder: {destFolder}\n");
@@ -157,13 +156,13 @@ namespace EmmcHaccGen
             // Bis creation
             Console.WriteLine("\nGenerating bis..");
             BisAssembler bisAssembler = new BisAssembler(ref ncaIndex, destFolder);
-            BisFileAssembler bisFileAssembler = new BisFileAssembler($"{versionExtractor.platform.ToUpper()}-{versionExtractor.version}{((!noExfat) ? "_exFAT" : "")}", ref bisAssembler, $"{destFolder}/boot.bis");
+            BisFileAssembler bisFileAssembler = new BisFileAssembler($"{versionExtractor.Version}{((!noExfat) ? "_exFAT" : "")}", ref bisAssembler, $"{destFolder}/boot.bis");
 
             // Copy fw files
             Console.WriteLine("\nCopying files...");
             foreach (var file in Directory.EnumerateFiles(fwPath))
             {
-                File.Copy(file, $"{destFolder}/SYSTEM/Contents/registered/{file.Split(new char[] { '/', '\\' }).Last()}", true);
+                File.Copy(file, $"{destFolder}/SYSTEM/Contents/registered/{file.Split(new char[] { '/', '\\' }).Last().Replace(".cnmt.nca", ".nca")}", true);
             }
 
             // Archive bit setting
