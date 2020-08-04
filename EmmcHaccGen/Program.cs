@@ -162,7 +162,7 @@ namespace EmmcHaccGen
             Console.WriteLine("\nCopying files...");
             foreach (var file in Directory.EnumerateFiles(fwPath))
             {
-                File.Copy(file, $"{destFolder}/SYSTEM/Contents/registered/{file.Split(new char[] { '/', '\\' }).Last()}", true);
+                File.Copy(file, $"{destFolder}/SYSTEM/Contents/registered/{file.Split(new char[] { '/', '\\' }).Last().Replace(".cnmt.nca", ".nca")}", true);
             }
 
             // Archive bit setting
