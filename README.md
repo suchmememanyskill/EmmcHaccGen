@@ -2,8 +2,6 @@
 
 Supposed to be a replacement of ChoiDujour
 
-Name may not be final
-
 # How to use
 Go to the [Releases](https://github.com/suchmememanyskill/EmmcHaccGen/releases) tab to grab yourself the latest release.
 ```
@@ -39,4 +37,4 @@ Options:
 | 3.0.0 -> 3.0.2   | Untested 
 | 4.0.0 -> 4.1.0   | Works 
 | 5.0.0 -> 6.1.0   | Untested 
-| 6.2.0 -> 10.1.0  | Works
+| 6.2.0 -> 11.0.1  | Works
