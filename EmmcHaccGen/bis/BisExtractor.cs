@@ -22,10 +22,13 @@ namespace EmmcHaccGen.bis
         private void Extract(NcaFile nca)
         {
             IFileSystem fs = nca.data.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.ErrorOnInvalid);
+            string startPath = (Config.marikoBoot) ? "/a/" : "/nx/";
+            bct = this.ReadFile(startPath + "bct", ref fs);
 
-            bct = this.ReadFile("/nx/bct", ref fs);
-            bct[0x210] = 0x77;
-            pkg1 = this.ReadFile("/nx/package1", ref fs);
+            if (!Config.noAutoRcm)
+                bct[0x210] = 0x77;
+
+            pkg1 = this.ReadFile(startPath + "package1", ref fs);
             pkg2 = this.ReadFile("/nx/package2", ref fs);
 
             fs.Dispose();

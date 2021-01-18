@@ -113,6 +113,9 @@ namespace EmmcHaccGen.imkv
         }
         private void AddContentNca()
         {
+            if (!pair[0].cnmt.ContentEntries[0].Hash.Take<byte>(16).SequenceEqual(cnmtRaw.content[0].raw_content_id))
+                Console.WriteLine("LibHac cnmt does not match selfparsed cnmt");
+
             if (!cnmtRaw.content[0].raw_content_id.SequenceEqual(pair[1].hash))
                 throw new Exception("[IMEN] Invalid hash given");
 
