@@ -11,6 +11,7 @@ using LibHac.FsSystem.NcaUtils;
 using LibHac.FsSystem;
 using LibHac.FsSystem.Save;
 using System.Linq;
+using LibHac.Fs.Fsa;
 
 namespace EmmcHaccGen
 {
@@ -65,8 +66,7 @@ namespace EmmcHaccGen
         /// <param name="fixHashes">Fix incorrect hashes in the source firmware folder. Disabled by default</param>
         /// <param name="mariko">Disables AutoRcm, enables v5 save container and enables mariko boot generation</param>
         /// <param name="noAutorcm">Disables AutoRcm</param>
-        /// <param name="saveV5">Enables v5 save generation. Useful for patched erista or mariko units</param>
-        static void Main(string keys=null, string fw=null, bool noExfat=false, bool verbose=false, bool showNcaIndex=false, bool fixHashes=false, bool noAutorcm=false, bool saveV5=false, bool mariko=false)
+        static void Main(string keys=null, string fw=null, bool noExfat=false, bool verbose=false, bool showNcaIndex=false, bool fixHashes=false, bool noAutorcm=false, bool mariko=false)
         {
             Console.WriteLine("EmmcHaccGen started");
 
@@ -89,9 +89,9 @@ namespace EmmcHaccGen
             }
 
             Program program = new Program();
-            program.Start(keys, fw, noExfat, verbose, showNcaIndex, fixHashes, noAutorcm, saveV5, mariko);
+            program.Start(keys, fw, noExfat, verbose, showNcaIndex, fixHashes, noAutorcm, mariko);
         }
-        void Start(string keys, string fwPath, bool noExfat, bool verbose, bool showNcaIndex, bool fixHashes, bool noAutoRcm, bool v5, bool mariko)
+        void Start(string keys, string fwPath, bool noExfat, bool verbose, bool showNcaIndex, bool fixHashes, bool noAutoRcm, bool mariko)
         {
             Config.keyset = ExternalKeyReader.ReadKeyFile(keys);
             Config.fwPath = fwPath;
@@ -101,7 +101,6 @@ namespace EmmcHaccGen
             Config.verbose = verbose;
             Config.fixHashes = fixHashes;
             Config.noAutoRcm = mariko || noAutoRcm;
-            Config.v5 = mariko || v5;
             Config.marikoBoot = mariko;
 
             int convertCount = 0;
@@ -121,6 +120,8 @@ namespace EmmcHaccGen
             NcaIndexer ncaIndex = new NcaIndexer();
 
             VersionExtractor versionExtractor = new VersionExtractor(ncaIndex.FindNca("0100000000000809", NcaContentType.Meta));
+
+            Config.v5 = versionExtractor.UseV5Save();
 
             string prefix = (Config.marikoBoot) ? "a" : "NX";
             string destFolder = $"{prefix}-{versionExtractor.Version}";
@@ -189,7 +190,7 @@ namespace EmmcHaccGen
             if (verbose)
                 imkvdb.DumpToFile($"{destFolder}/data.arc");
 
-            File.Copy((Config.v5) ? "save.stub.v5" : "save.stub.v4", $"{destFolder}/SYSTEM/save/8000000000000120", true);
+            File.Copy($"save.stub.{saveVersion}", $"{destFolder}/SYSTEM/save/8000000000000120", true);
 
             using (IStorage outfile = new LocalStorage($"{destFolder}/SYSTEM/save/8000000000000120", FileAccess.ReadWrite))
             {

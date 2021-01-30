@@ -6,6 +6,7 @@ using LibHac.Fs;
 using LibHac.Common;
 using LibHac.FsSystem;
 using LibHac.FsSystem.NcaUtils;
+using LibHac.Fs.Fsa;
 
 namespace EmmcHaccGen.bis
 {
