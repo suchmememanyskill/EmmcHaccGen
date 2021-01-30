@@ -14,10 +14,12 @@ Usage:
 Options:
   --keys <keys>       Path to your keyset file
   --fw <fw>           Path to your firmware folder
-  --no-exfat          noExfat switch. Add this if you don't want exfat support. Disabled by default
+  --no-exfat          Disables exfat support on generated firmware when enabled. Disabled by default
   --verbose           Enable verbose output. Disabled by default
   --show-nca-index    Show info about nca's, like it's titleid and type. Will not generate a firmware folder with this option enabled
   --fix-hashes        Fix incorrect hashes in the source firmware folder. Disabled by default
+  --no-autorcm        Disables AutoRcm
+  --mariko            Enables mariko boot generation (and disables autorcm)
   --version           Show version information
   -?, -h, --help      Show help and usage information
 ```

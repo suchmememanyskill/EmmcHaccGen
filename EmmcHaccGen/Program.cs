@@ -60,11 +60,11 @@ namespace EmmcHaccGen
         /// </summary>
         /// <param name="keys">Path to your keyset file</param>
         /// <param name="fw">Path to your firmware folder</param>
-        /// <param name="noExfat">noExfat switch. Add this if you don't want exfat support. Disabled by default</param>
+        /// <param name="noExfat">Disables exfat support on generated firmware when enabled. Disabled by default</param>
         /// <param name="verbose">Enable verbose output. Disabled by default</param>
         /// <param name="showNcaIndex">Show info about nca's, like it's titleid and type. Will not generate a firmware folder with this option enabled</param>
         /// <param name="fixHashes">Fix incorrect hashes in the source firmware folder. Disabled by default</param>
-        /// <param name="mariko">Disables AutoRcm, enables v5 save container and enables mariko boot generation</param>
+        /// <param name="mariko">Enables mariko boot generation (and disables autorcm)</param>
         /// <param name="noAutorcm">Disables AutoRcm</param>
         static void Main(string keys=null, string fw=null, bool noExfat=false, bool verbose=false, bool showNcaIndex=false, bool fixHashes=false, bool noAutorcm=false, bool mariko=false)
         {
