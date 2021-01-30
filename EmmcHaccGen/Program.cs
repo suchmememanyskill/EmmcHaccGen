@@ -11,6 +11,7 @@ using LibHac.FsSystem.NcaUtils;
 using LibHac.FsSystem;
 using LibHac.FsSystem.Save;
 using System.Linq;
+using LibHac.Fs.Fsa;
 
 namespace EmmcHaccGen
 {
@@ -63,7 +64,9 @@ namespace EmmcHaccGen
         /// <param name="verbose">Enable verbose output. Disabled by default</param>
         /// <param name="showNcaIndex">Show info about nca's, like it's titleid and type. Will not generate a firmware folder with this option enabled</param>
         /// <param name="fixHashes">Fix incorrect hashes in the source firmware folder. Disabled by default</param>
-        static void Main(string keys=null, string fw=null, bool noExfat=false, bool verbose=false, bool showNcaIndex=false, bool fixHashes=false)
+        /// <param name="mariko">Disables AutoRcm, enables v5 save container and enables mariko boot generation</param>
+        /// <param name="noAutorcm">Disables AutoRcm</param>
+        static void Main(string keys=null, string fw=null, bool noExfat=false, bool verbose=false, bool showNcaIndex=false, bool fixHashes=false, bool noAutorcm=false, bool mariko=false)
         {
             Console.WriteLine("EmmcHaccGen started");
 
@@ -86,9 +89,9 @@ namespace EmmcHaccGen
             }
 
             Program program = new Program();
-            program.Start(keys, fw, noExfat, verbose, showNcaIndex, fixHashes);
+            program.Start(keys, fw, noExfat, verbose, showNcaIndex, fixHashes, noAutorcm, mariko);
         }
-        void Start(string keys, string fwPath, bool noExfat, bool verbose, bool showNcaIndex, bool fixHashes)
+        void Start(string keys, string fwPath, bool noExfat, bool verbose, bool showNcaIndex, bool fixHashes, bool noAutoRcm, bool mariko)
         {
             Config.keyset = ExternalKeyReader.ReadKeyFile(keys);
             Config.fwPath = fwPath;
@@ -97,6 +100,8 @@ namespace EmmcHaccGen
             Config.safeBisId = (noExfat) ? "010000000000081A" : "010000000000081C";
             Config.verbose = verbose;
             Config.fixHashes = fixHashes;
+            Config.noAutoRcm = mariko || noAutoRcm;
+            Config.marikoBoot = mariko;
 
             int convertCount = 0;
             foreach (var foldername in Directory.GetDirectories(fwPath, "*.nca"))
@@ -116,7 +121,10 @@ namespace EmmcHaccGen
 
             VersionExtractor versionExtractor = new VersionExtractor(ncaIndex.FindNca("0100000000000809", NcaContentType.Meta));
 
-            string destFolder = $"NX-{versionExtractor.Version}";
+            Config.v5 = versionExtractor.UseV5Save();
+
+            string prefix = (Config.marikoBoot) ? "a" : "NX";
+            string destFolder = $"{prefix}-{versionExtractor.Version}";
             if (!noExfat)
                 destFolder += "_exFAT";
 
@@ -126,11 +134,16 @@ namespace EmmcHaccGen
                 return;
             }
 
+            string saveVersion = (Config.v5) ? "v5" : "v4";
+
             Console.WriteLine("\nEmmcHaccGen will now generate firmware files using the following settings:\n" +
                 $"fw: {versionExtractor.Version}\n" + 
                 $"Exfat Support: {!noExfat}\n" +
                 $"Key path: {keys}\n" +
-                $"Destination folder: {destFolder}\n");
+                $"Destination folder: {destFolder}\n" +
+                $"Mariko boot generation: {mariko}\n" +
+                $"Save version: {saveVersion}\n" +
+                $"AutoRCM: {!Config.noAutoRcm}\n");
 
             if (verbose)
                 Console.WriteLine($"BisIds:\nNormal: {Config.normalBisId}\nSafe:   {Config.safeBisId}\n");
@@ -140,7 +153,7 @@ namespace EmmcHaccGen
 
             if (Directory.Exists(destFolder))
             {
-                Console.Write("Destenation folder already exists. Delete the old folder?\nY/N: ");
+                Console.Write("Destination folder already exists. Delete the old folder?\nY/N: ");
                 string input = Console.ReadLine();
 
                 if (input[0].ToString().ToLower() != "y")
@@ -177,7 +190,7 @@ namespace EmmcHaccGen
             if (verbose)
                 imkvdb.DumpToFile($"{destFolder}/data.arc");
 
-            File.Copy("save.stub", $"{destFolder}/SYSTEM/save/8000000000000120", true);
+            File.Copy($"save.stub.{saveVersion}", $"{destFolder}/SYSTEM/save/8000000000000120", true);
 
             using (IStorage outfile = new LocalStorage($"{destFolder}/SYSTEM/save/8000000000000120", FileAccess.ReadWrite))
             {

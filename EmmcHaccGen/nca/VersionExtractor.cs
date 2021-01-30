@@ -26,6 +26,11 @@ namespace EmmcHaccGen.nca
             }
         }
 
+        public bool UseV5Save()
+        {
+            return (ExtractedVersion.Major >= 5);
+        }
+
         public VersionExtractor() { }
         public VersionExtractor(NcaFile nca)
         {

@@ -11,6 +11,7 @@ using System.Linq;
 using LibHac.FsSystem.Save;
 using EmmcHaccGen.cnmt;
 using System.Security.Cryptography;
+using LibHac.Fs.Fsa;
 
 namespace EmmcHaccGen.nca
 {
