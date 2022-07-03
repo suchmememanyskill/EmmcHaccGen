@@ -86,7 +86,7 @@ namespace EmmcHaccGen.nca
                     Console.WriteLine("Consider trying out the '--no-exfat' option");
                 Console.WriteLine("Is your firmware dump valid?");
                 Console.ResetColor();
-                Environment.Exit(0);
+                Environment.Exit(1);
             }
             return file;
         }
