@@ -49,7 +49,7 @@ namespace EmmcHaccGen.nca
                 Console.WriteLine("Unable to create NCA class. Is your keyset file valid?");
                 Console.WriteLine($"Error: {e.Message}");
                 Console.ResetColor();
-                Environment.Exit(0);
+                Environment.Exit(1);
             }
 
             if (header.ContentType == NcaContentType.Meta)

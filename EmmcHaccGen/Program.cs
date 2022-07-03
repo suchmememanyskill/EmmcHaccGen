@@ -73,19 +73,19 @@ namespace EmmcHaccGen
             if (keys == null || fw == null)
             {
                 Console.WriteLine("Missing arguments. Type 'EmmcHaccGen.exe -h' for commandline usage");
-                return;
+                Environment.Exit(1);
             }
 
             if (!File.Exists(keys))
             {
                 Console.WriteLine("Keyset file not found");
-                return;
+                Environment.Exit(1);
             }
 
             if (!Directory.Exists(fw))
             {
                 Console.WriteLine("Firmware path not found");
-                return;
+                Environment.Exit(1);;
             }
 
             Program program = new Program();
@@ -157,7 +157,7 @@ namespace EmmcHaccGen
                 string input = Console.ReadLine();
 
                 if (input[0].ToString().ToLower() != "y")
-                    return;
+                    Environment.Exit(-1);
 
                 Console.WriteLine($"Deleting {destFolder}");
                 Directory.Delete(destFolder, true);
