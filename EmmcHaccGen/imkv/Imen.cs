@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using EmmcHaccGen.nca;
 using EmmcHaccGen.cnmt;
-using LibHac;
+using LibHac.Tools.Ncm;
 
 namespace EmmcHaccGen.imkv
 {

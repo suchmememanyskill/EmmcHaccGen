@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using EmmcHaccGen.nca;
-using LibHac.FsSystem.NcaUtils;
+using LibHac.FsSystem;
 
 namespace EmmcHaccGen.bis
 {

@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using EmmcHaccGen.nca;
+﻿using EmmcHaccGen.nca;
 using LibHac.Fs;
 using LibHac.Common;
 using LibHac.FsSystem;
-using LibHac.FsSystem.NcaUtils;
 using LibHac.Fs.Fsa;
+using LibHac.Tools.FsSystem;
 
 namespace EmmcHaccGen.bis
 {
@@ -37,12 +34,13 @@ namespace EmmcHaccGen.bis
         private byte[] ReadFile(string path, ref IFileSystem fs)
         {
             byte[] tempByte;
+            UniqueRef<IFile> file = new();
 
-            fs.OpenFile(out IFile file, new U8Span(path), OpenMode.Read);
-            file.GetSize(out long size);
+            fs.OpenFile(ref file, new U8Span(path), OpenMode.Read);
+            file.Get.GetSize(out long size);
             tempByte = new byte[size];
-            file.Read(out long read, 0, tempByte);
-            file.Dispose();
+            file.Get.Read(out long read, 0, tempByte);
+            file.Get.Dispose();
 
             return tempByte;
         }
