@@ -4,6 +4,7 @@ using LibHac.Common;
 using LibHac.FsSystem;
 using LibHac.Fs.Fsa;
 using LibHac.Tools.FsSystem;
+using LibHac.Tools.FsSystem.NcaUtils;
 
 namespace EmmcHaccGen.bis
 {

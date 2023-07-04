@@ -11,7 +11,9 @@ using System.Linq;
 using LibHac.Fs.Fsa;
 using LibHac.Common.Keys;
 using LibHac.Tools.FsSystem;
+using LibHac.Tools.FsSystem.NcaUtils;
 using LibHac.Tools.FsSystem.Save;
+using System.Reflection;
 
 namespace EmmcHaccGen
 {
@@ -190,7 +192,9 @@ namespace EmmcHaccGen
             if (verbose)
                 imkvdb.DumpToFile($"{destFolder}/data.arc");
 
-            File.Copy($"save.stub.{saveVersion}", $"{destFolder}/SYSTEM/save/8000000000000120", true);
+            FileStream destSave = new FileStream($"{destFolder}/SYSTEM/save/8000000000000120", FileMode.CreateNew);
+            Assembly.GetExecutingAssembly().GetManifestResourceStream($"EmmcHaccGen.save.save.stub.{saveVersion}").CopyTo(destSave);
+            destSave.Close();
 
             using (IStorage outfile = new LocalStorage($"{destFolder}/SYSTEM/save/8000000000000120", FileAccess.ReadWrite))
             {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using LibHac.FsSystem;
+using LibHac.Tools.FsSystem.NcaUtils;
 
 namespace EmmcHaccGen.nca
 {

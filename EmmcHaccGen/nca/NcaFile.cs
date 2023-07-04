@@ -10,6 +10,7 @@ using LibHac.Tools.Ncm;
 using LibHac.Tools.FsSystem;
 using LibHac.Tools.FsSystem.NcaUtils;
 using EmmcHaccGen.cnmt;
+using NcaHeader = LibHac.Tools.FsSystem.NcaUtils.NcaHeader;
 
 namespace EmmcHaccGen.nca
 {
