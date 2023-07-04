@@ -14,45 +14,21 @@ using LibHac.Tools.FsSystem;
 using LibHac.Tools.FsSystem.NcaUtils;
 using LibHac.Tools.FsSystem.Save;
 using System.Reflection;
+using Path = System.IO.Path;
 
 namespace EmmcHaccGen
 {
     class Program
     {
-        static string[] FOLDERSTRUCTURE = new string[]
+        void ShowNcaIndex(NcaIndexer ncaIndex, string version)
         {
-            "/SAFE",
-            "/SYSTEM/Contents/placehld",
-            "/SYSTEM/Contents/registered",
-            "/SYSTEM/save",
-            "/USER/Album",
-            "/USER/Contents/placehld",
-            "/USER/Contents/registered",
-            "/USER/save",
-            "/USER/saveMeta",
-            "/USER/temp"
-        };
-        void SetArchiveRecursively(string path)
-        {
-            foreach (var file in Directory.EnumerateFiles(path))
-            {
-                File.SetAttributes(file, FileAttributes.Archive);
-            }
-            foreach (var folder in Directory.EnumerateDirectories(path))
-            {
-                File.SetAttributes(folder, 0);
-                SetArchiveRecursively(folder);
-            }
-        }
-        void ShowNcaIndex(ref NcaIndexer ncaIndex, string version)
-        {
-            Console.WriteLine($"\nVersion: {version}\nNcaCount: {ncaIndex.files.Count}\n");
-            foreach(KeyValuePair<string, List<NcaFile>> ncaPair in ncaIndex.sortedNcaDict)
+            Console.WriteLine($"\nVersion: {version}\nNcaCount: {ncaIndex.Files.Count}\n");
+            foreach(KeyValuePair<string, List<NcaFile>> ncaPair in ncaIndex.SortedFiles)
             {
                 Console.WriteLine($"Titleid: {ncaPair.Key}");
                 foreach(NcaFile file in ncaPair.Value)
                 {
-                    Console.WriteLine($"    - Nca: {file.filename} >> ID: {file.header.TitleId:x16}, Type: {file.header.ContentType}");
+                    Console.WriteLine($"    - Nca: {file.FileName} >> ID: {file.Header.TitleId:x16}, Type: {file.Header.ContentType}");
                 }
                 Console.WriteLine();
             }
@@ -71,6 +47,7 @@ namespace EmmcHaccGen
         static void Main(string keys=null, string fw=null, bool noExfat=false, bool verbose=false, bool showNcaIndex=false, bool fixHashes=false, bool noAutorcm=false, bool mariko=false)
         {
             Console.WriteLine("EmmcHaccGen started");
+            
 
             if (keys == null || fw == null)
             {
@@ -95,120 +72,38 @@ namespace EmmcHaccGen
         }
         void Start(string keys, string fwPath, bool noExfat, bool verbose, bool showNcaIndex, bool fixHashes, bool noAutoRcm, bool mariko)
         {
-            Config.keyset = ExternalKeyReader.ReadKeyFile(keys);
-            Config.fwPath = fwPath;
-            Config.noExfat = noExfat;
-            Config.normalBisId = (noExfat) ? "0100000000000819" : "010000000000081B";
-            Config.safeBisId = (noExfat) ? "010000000000081A" : "010000000000081C";
-            Config.verbose = verbose;
-            Config.fixHashes = fixHashes;
-            Config.noAutoRcm = mariko || noAutoRcm;
-            Config.marikoBoot = mariko;
+            Console.WriteLine("Indexing NCA files...");
+            LibEmmcHaccGen lib = new(keys, fwPath);
+            
+            Console.WriteLine("Extracted firmware:");
+            Console.WriteLine($"Version: {lib.NcaIndexer.Version}");
+            Console.WriteLine("Save Version: " + (lib.NcaIndexer.RequiresV5Save ? "v5" : "v4"));
+            Console.WriteLine("Exfat Support: " + (lib.HasExfatCompat ? "Yes" : "No"));
+            Console.WriteLine($"NCA Count: {lib.NcaIndexer.Files.Count}");
+            Console.WriteLine("\n");
+            
+            string prefix = (mariko) ? "a" : "NX";
+            string destFolder = $"{prefix}-{lib.NcaIndexer.Version}" + (!noExfat ? "_exFAT" : "");
+            string destPath = Path.Join(".", destFolder);
 
-            int convertCount = 0;
-            foreach (var foldername in Directory.GetDirectories(fwPath, "*.nca"))
+            if (Directory.Exists(destPath))
             {
-                convertCount++;
-                File.Move($"{foldername}/00", $"{fwPath}/temp");
-                Directory.Delete(foldername);
-                File.Move($"{fwPath}/temp", foldername);
+                Console.Write("Output directory already exists. Overwrite? (Y/N): ");
+                string line = Console.ReadLine()!;
+                
+                if (line.ToLower()[0] == 'y')
+                    Directory.Delete(destFolder, true);
+                else
+                    throw new Exception("Output directory already exists");
             }
 
-            if (convertCount > 0)
-                Console.WriteLine($"Converted folder ncas to files (count: {convertCount})");
+            Directory.CreateDirectory(destPath);
 
-            Console.WriteLine("Indexing nca files...");
-
-            NcaIndexer ncaIndex = new NcaIndexer();
-
-            VersionExtractor versionExtractor = new VersionExtractor(ncaIndex.FindNca("0100000000000809", NcaContentType.Meta));
-
-            Config.v5 = versionExtractor.UseV5Save();
-
-            string prefix = (Config.marikoBoot) ? "a" : "NX";
-            string destFolder = $"{prefix}-{versionExtractor.Version}";
-            if (!noExfat)
-                destFolder += "_exFAT";
-
-            if (showNcaIndex)
-            {
-                ShowNcaIndex(ref ncaIndex, destFolder);
-                return;
-            }
-
-            string saveVersion = (Config.v5) ? "v5" : "v4";
-
-            Console.WriteLine("\nEmmcHaccGen will now generate firmware files using the following settings:\n" +
-                $"fw: {versionExtractor.Version}\n" + 
-                $"Exfat Support: {!noExfat}\n" +
-                $"Key path: {keys}\n" +
-                $"Destination folder: {destFolder}\n" +
-                $"Mariko boot generation: {mariko}\n" +
-                $"Save version: {saveVersion}\n" +
-                $"AutoRCM: {!Config.noAutoRcm}\n");
-
-            if (verbose)
-                Console.WriteLine($"BisIds:\nNormal: {Config.normalBisId}\nSafe:   {Config.safeBisId}\n");
-
-            // Folder creation
-            Console.WriteLine("\nCreating folders..");
-
-            if (Directory.Exists(destFolder))
-            {
-                Console.Write("Destination folder already exists. Delete the old folder?\nY/N: ");
-                string input = Console.ReadLine();
-
-                if (input[0].ToString().ToLower() != "y")
-                    return;
-
-                Console.WriteLine($"Deleting {destFolder}");
-                Directory.Delete(destFolder, true);
-            }
-
-            foreach(string folder in FOLDERSTRUCTURE)
-                Directory.CreateDirectory($"{destFolder}{folder}");
-
-            // Bis creation
-            Console.WriteLine("\nGenerating bis..");
-            BisAssembler bisAssembler = new BisAssembler(ref ncaIndex, destFolder);
-            BisFileAssembler bisFileAssembler = new BisFileAssembler($"{versionExtractor.Version}{((!noExfat) ? "_exFAT" : "")}", ref bisAssembler, $"{destFolder}/boot.bis");
-
-            // Copy fw files
-            Console.WriteLine("\nCopying files...");
-            foreach (var file in Directory.EnumerateFiles(fwPath))
-            {
-                File.Copy(file, $"{destFolder}/SYSTEM/Contents/registered/{file.Split(new char[] { '/', '\\' }).Last().Replace(".cnmt.nca", ".nca")}", true);
-            }
-
-            // Archive bit setting
-            Console.WriteLine("\nSetting archive bits..");
-            SetArchiveRecursively($"{destFolder}/SYSTEM");
-            SetArchiveRecursively($"{destFolder}/USER");
-
-            //Imkv generation
-            Console.WriteLine("\nGenerating imkvdb..");
-            Imkv imkvdb = new Imkv(ref ncaIndex);
-
-            if (verbose)
-                imkvdb.DumpToFile($"{destFolder}/data.arc");
-
-            FileStream destSave = new FileStream($"{destFolder}/SYSTEM/save/8000000000000120", FileMode.CreateNew);
-            Assembly.GetExecutingAssembly().GetManifestResourceStream($"EmmcHaccGen.save.save.stub.{saveVersion}").CopyTo(destSave);
-            destSave.Close();
-
-            using (IStorage outfile = new LocalStorage($"{destFolder}/SYSTEM/save/8000000000000120", FileAccess.ReadWrite))
-            {
-                var save = new SaveDataFileSystem(Config.keyset, outfile, IntegrityCheckLevel.ErrorOnInvalid, true);
-                UniqueRef<IFile> file = new();
-
-                save.OpenFile(ref file, new U8Span("/meta/imkvdb.arc"), OpenMode.AllowAppend | OpenMode.ReadWrite);
-                using (file)
-                {
-                    file.Get.Write(0, imkvdb.bytes.ToArray(), WriteOption.Flush).ThrowIfFailure();
-                }
-                save.Commit(Config.keyset).ThrowIfFailure();
-            }
-            Console.WriteLine($"Wrote save with an imvkdb size of 0x{imkvdb.bytes.Count:X4}");
+            Console.WriteLine("Generating BIS (boot0, boot1, BCPKG2 1-4)...");
+            lib.WriteBis(destPath, !noAutoRcm, !noExfat, mariko);
+            
+            Console.WriteLine("Generating System...");
+            lib.WriteSystem(destFolder, !noExfat, lib.NcaIndexer.RequiresV5Save || mariko, verbose);
         }
     }
 }

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace EmmcHaccGen.cnmt
 {
-    class CnmtRawParser
+    public class CnmtRawParser
     {
         private byte[] raw_cnmt;
         public byte[] raw_title_id, raw_title_version, raw_ext_header_size, raw_content_count, raw_content_meta_count, raw_req_dl_system_version, ext_data;
@@ -75,7 +75,7 @@ namespace EmmcHaccGen.cnmt
         }
     }
 
-    class RawContentRecord
+    public class RawContentRecord
     {
         private byte[] record;
         public byte[] raw_hash, raw_content_id, raw_size;
@@ -114,7 +114,7 @@ namespace EmmcHaccGen.cnmt
             return temp.ToArray();
         }
     }
-    class RawMetaContentRecord
+    public class RawMetaContentRecord
     {
         private byte[] record;
         public byte[] raw_title_id, raw_version, raw_content_meta_attribs;

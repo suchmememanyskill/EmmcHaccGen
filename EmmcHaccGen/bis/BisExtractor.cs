@@ -13,22 +13,22 @@ namespace EmmcHaccGen.bis
         public byte[] bct, pkg1, pkg2;
 
         public BisExtractor() { }
-        public BisExtractor(NcaFile nca)
+        public BisExtractor(NcaFile nca, bool autorcm, bool mariko)
         {
-            this.Extract(nca);
+            this.Extract(nca, autorcm, mariko);
         }
 
-        private void Extract(NcaFile nca)
+        private void Extract(NcaFile nca, bool autorcm, bool mariko)
         {
-            IFileSystem fs = nca.data.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.ErrorOnInvalid);
-            string startPath = (Config.marikoBoot) ? "/a/" : "/nx/";
+            IFileSystem fs = nca.Data.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.ErrorOnInvalid);
+            string startPath = mariko ? "/a/" : "/nx/";
             bct = this.ReadFile(startPath + "bct", ref fs);
 
-            if (!Config.noAutoRcm)
+            if (autorcm)
                 bct[0x210] = 0x77;
 
-            pkg1 = this.ReadFile(startPath + "package1", ref fs);
-            pkg2 = this.ReadFile("/nx/package2", ref fs);
+            pkg1 = ReadFile(startPath + "package1", ref fs);
+            pkg2 = ReadFile("/nx/package2", ref fs);
 
             fs.Dispose();
         }

@@ -11,15 +11,15 @@ namespace EmmcHaccGen.bis
         public BisFileAssembler()
         { }
 
-        public BisFileAssembler(string version, ref BisAssembler bisAssembler, string path)
+        public BisFileAssembler(string version, BisAssembler bisAssembler, string path, bool exfat = true)
         {
             bytes = new ByteHolder(0x1200025);
             header = new ByteHolder(0x25);
 
-            this.Assemble(version, ref bisAssembler, path);
+            Assemble(version, bisAssembler, path, exfat);
         }
 
-        public void Assemble(string version, ref BisAssembler bisAssembler, string path)
+        public void Assemble(string version, BisAssembler bisAssembler, string path, bool exfat)
         {
             byte[] text = new byte[0x10] { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
             Encoding.UTF8.GetBytes(version).CopyTo(text, 0);
@@ -28,7 +28,7 @@ namespace EmmcHaccGen.bis
             byte[] args = new byte[1];
             args[0] = 0xF0;
 
-            if (!Config.noExfat)
+            if (exfat)
                 args[0] += 0x01;
 
             header.Write(args);

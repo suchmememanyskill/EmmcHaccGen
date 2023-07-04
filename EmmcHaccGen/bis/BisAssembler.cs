@@ -14,7 +14,7 @@ namespace EmmcHaccGen.bis
         private string destFolder;
 
         public BisAssembler() { }
-        public BisAssembler(ref NcaIndexer files, string dest)
+        public BisAssembler(NcaIndexer files, string dest, bool exfat, bool autorcm, bool mariko)
         {
             boot0 = new ByteHolder(0x180000);
             boot1 = new ByteHolder(0x80000);
@@ -22,13 +22,12 @@ namespace EmmcHaccGen.bis
             bcpkg2_3 = new ByteHolder(0x800000);
 
             destFolder = dest;
-
-            this.Assemble(ref files);
+            Assemble(files, exfat, autorcm, mariko);
         }
-        private void Assemble(ref NcaIndexer files)
+        private void Assemble(NcaIndexer files, bool exfat, bool autorcm, bool mariko)
         {
-            normal = new BisExtractor(files.FindNca(Config.normalBisId, NcaContentType.Data));
-            safe = new BisExtractor(files.FindNca(Config.safeBisId, NcaContentType.Data));
+            normal = new BisExtractor(files.FindNca((exfat) ? "010000000000081B" : "0100000000000819", NcaContentType.Data)!, autorcm, mariko);
+            safe = new BisExtractor(files.FindNca((exfat) ? "010000000000081C" : "010000000000081A", NcaContentType.Data)!, autorcm, mariko);
 
             boot0.Write(normal.bct);
             boot0.Pad(0x4000 - normal.bct.Length);

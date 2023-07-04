@@ -16,14 +16,14 @@ namespace EmmcHaccGen.imkv
         {
             get
             {
-                return pair[0].cnmt;
+                return pair[0].Cnmt;
             }
         }
         private CnmtRawParser cnmtRaw
         {
             get
             {
-                return pair[0].cnmt_raw;
+                return pair[0].CnmtRaw;
             }
         }
 
@@ -52,9 +52,6 @@ namespace EmmcHaccGen.imkv
             bytes.AddRange(BitConverter.GetBytes((UInt32)value.Count));
             bytes.AddRange(key);
             bytes.AddRange(value);
-
-            if (Config.verbose)
-                Console.WriteLine($"{pair[0].titleId}: {BitConverter.ToString(bytes.ToArray()).Replace("-", "")}".ToLower());
         }
         private void GenKey()
         {
@@ -99,8 +96,8 @@ namespace EmmcHaccGen.imkv
         }
         private void AddMetaNca()
         {
-            value.AddRange(pair[0].hash);
-            value.AddRange(BitConverter.GetBytes((UInt16)pair[0].header.NcaSize));
+            value.AddRange(pair[0].Hash);
+            value.AddRange(BitConverter.GetBytes((UInt16)pair[0].Header.NcaSize));
 
             value.Add(0);
             value.Add(0);
@@ -112,10 +109,10 @@ namespace EmmcHaccGen.imkv
         }
         private void AddContentNca()
         {
-            if (!pair[0].cnmt.ContentEntries[0].Hash.Take<byte>(16).SequenceEqual(cnmtRaw.content[0].raw_content_id))
+            if (!pair[0].Cnmt.ContentEntries[0].Hash.Take<byte>(16).SequenceEqual(cnmtRaw.content[0].raw_content_id))
                 Console.WriteLine("LibHac cnmt does not match selfparsed cnmt");
 
-            if (!cnmtRaw.content[0].raw_content_id.SequenceEqual(pair[1].hash))
+            if (!cnmtRaw.content[0].raw_content_id.SequenceEqual(pair[1].Hash))
                 throw new Exception("[IMEN] Invalid hash given");
 
             value.AddRange(cnmtRaw.content[0].GetRawRecord());

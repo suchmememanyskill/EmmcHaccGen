@@ -6,6 +6,7 @@
     <Version>2.2.3</Version>
     <RepositoryUrl>https://github.com/suchmememanyskill/EmmcHaccGen</RepositoryUrl>
     <LangVersion>11</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

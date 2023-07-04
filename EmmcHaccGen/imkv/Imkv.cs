@@ -2,35 +2,28 @@
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using System.Linq;
 using EmmcHaccGen.nca;
 
 namespace EmmcHaccGen.imkv
 {
     class Imkv
     {
-        public List<byte> bytes;
-        public List<Imen> imenlist;
-
-        public Imkv() { }
-
-        public Imkv(ref NcaIndexer ncaIndex)
+        private NcaIndexer _indexer;
+        private List<string> _skipTitles;
+        public byte[] Result { get; private set; }
+        
+        public Imkv(NcaIndexer ncaIndex, List<string>? skipTitles = null)
         {
-            bytes = new List<byte>();
-
-            this.MakeImenList(ref ncaIndex);
-            this.Build();
+            _indexer = ncaIndex;
+            _skipTitles = skipTitles ?? new();
+            Result = Build();
         }
-        public void MakeImenList(ref NcaIndexer ncaIndex)
+        
+        public byte[] Build()
         {
-            imenlist = new List<Imen>();
-
-            foreach(var entry in ncaIndex.sortedNcaDict)
-            {
-                imenlist.Add(new Imen(entry.Value));
-            }
-        }
-        public void Build()
-        {
+            List<byte> bytes = new();
+            
             bytes.Add(0x49); // Spells out IMKV
             bytes.Add(0x4D);
             bytes.Add(0x4B);
@@ -41,11 +34,20 @@ namespace EmmcHaccGen.imkv
             bytes.Add(0x0);
             bytes.Add(0x0);
 
-            bytes.AddRange(BitConverter.GetBytes((uint)imenlist.Count));
-            foreach (var single in imenlist)
+            List<Imen> imens = new();
+            
+            foreach(var entry in _indexer.SortedFiles.Where(x => !_skipTitles.Contains(x.Key)))
+            {
+                imens.Add(new Imen(entry.Value));
+            }
+            
+            bytes.AddRange(BitConverter.GetBytes((uint)imens.Count));
+            foreach (var single in imens)
             {
                 bytes.AddRange(single.bytes);
             }
+
+            return bytes.ToArray();
         }
 
         public void DumpToFile(string path)
@@ -55,10 +57,10 @@ namespace EmmcHaccGen.imkv
 
             using (Stream file = File.OpenWrite(path))
             {
-                file.Write(bytes.ToArray(), 0, bytes.Count);
+                file.Write(Result.ToArray(), 0, Result.Length);
             }
 
-            Console.WriteLine($"Wrote 0x{bytes.Count:x8} bytes to {path}");
+            Console.WriteLine($"Wrote 0x{Result.Length:x8} bytes to {path}");
         }
     }
 }

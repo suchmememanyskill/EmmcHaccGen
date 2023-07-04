@@ -10,110 +10,103 @@ using LibHac.Tools.Ncm;
 using LibHac.Tools.FsSystem;
 using LibHac.Tools.FsSystem.NcaUtils;
 using EmmcHaccGen.cnmt;
+using LibHac.Common.Keys;
 using NcaHeader = LibHac.Tools.FsSystem.NcaUtils.NcaHeader;
 
 namespace EmmcHaccGen.nca
 {
-    class NcaFile
+    public class NcaFile
     {
-        public string filename;
-        public string path;
-        public byte[] hash;
-        public string titleId;
-        public Nca data;
-        public NcaHeader header { 
+        public string FileName { get; private set; }
+        public string Path { get; private set; }
+        public byte[] Hash { get; private set; }
+        public string TitleId { get; private set; }
+        public Nca Data { get; private set; }
+        public NcaHeader Header { 
             get
             {
-                return data.Header;
+                return Data.Header;
             }
         }
-        public Cnmt cnmt;
-        public CnmtRawParser cnmt_raw;
-        private IStorage infile;
+        public Cnmt Cnmt { get; private set; }
+        public CnmtRawParser CnmtRaw { get; private set; }
+        private IStorage _stream;
+        private KeySet _keySet;
 
-        public void AddNcaInfo()
+        public NcaFile(KeySet keySet, string path, bool fixHash = false)
         {
-            if (Config.verbose)
-                Console.WriteLine($"Parsing File:     {path}");
+            FileName =  path.Split('/', '\\').Last();
+            Path = path;
+            _keySet = keySet;
 
-            infile = new LocalStorage(path, FileAccess.Read);
+            VerifyHash(fixHash);
+            AddNcaInfo();
+        }
+
+        private void AddNcaInfo()
+        {
+            _stream = new LocalStorage(Path, FileAccess.Read);
 
             try
             {
-                data = new Nca(Config.keyset, infile);
+                Data = new Nca(_keySet, _stream);
             }
             catch (Exception e)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Unable to create NCA class. Is your keyset file valid?");
-                Console.WriteLine($"Error: {e.Message}");
-                Console.ResetColor();
-                Environment.Exit(0);
+                throw new Exception($"Unable to create NCA class. Is your keyset file valid?\r\n{e.Message}");
             }
 
-            if (header.ContentType == NcaContentType.Meta)
+            if (Header.ContentType == NcaContentType.Meta)
             {
-                using IFileSystem fs = data.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.ErrorOnInvalid);
+                using IFileSystem fs = Data.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.ErrorOnInvalid);
                 string cnmtPath = fs.EnumerateEntries("/", "*.cnmt").Single().FullPath;
                 UniqueRef<IFile> cnmtFile = new();
 
                 fs.OpenFile(ref cnmtFile, new U8Span(cnmtPath), OpenMode.Read).ThrowIfFailure();
-                cnmt = new Cnmt(cnmtFile.Get.AsStream());
+                Cnmt = new Cnmt(cnmtFile.Get.AsStream());
 
                 cnmtFile.Get.GetSize(out long size);
                 byte[] cnmtRaw = new byte[size];
                 cnmtFile.Get.Read(out long none, 0, cnmtRaw);
 
-                cnmt_raw = new CnmtRawParser(cnmtRaw);
+                CnmtRaw = new CnmtRawParser(cnmtRaw);
             }
 
-            titleId = header.TitleId.ToString("x16").ToUpper();
+            TitleId = Header.TitleId.ToString("x16").ToUpper();
         }
-        public void GenHash()
+        private void VerifyHash(bool fixHash = false)
         {
-            string fileNameHash = filename.Substring(0, 32);
+            string fileNameHash = FileName.Substring(0, 32);
             string fileHash;
-
-            if (Config.verbose)
-                Console.Write($"Hashing File:     {filename}... ");
 
             using (SHA256 hasher = SHA256.Create())
             {
-                FileStream fileStream = File.OpenRead(path);
+                FileStream fileStream = File.OpenRead(Path);
                 fileStream.Position = 0;
 
-                hash = hasher.ComputeHash(fileStream).Take(16).ToArray();
+                Hash = hasher.ComputeHash(fileStream).Take(16).ToArray();
                 fileStream.Close();
             }
 
-            fileHash = BitConverter.ToString(hash).Replace("-", "").ToLower();
+            fileHash = BitConverter.ToString(Hash).Replace("-", "").ToLower();
 
             if (fileHash != fileNameHash)
             {
-                if (Config.verbose)
-                    Console.WriteLine("FAIL!");
+                Console.Write($"Incorrect hash for file {FileName}.");
 
-                Console.Write($"Incorrect hash for file {filename}. ");
-
-                if (Config.fixHashes)
+                if (fixHash)
                 {
                     Console.WriteLine($"Renaming to {fileHash}.nca");
-                    int indexOfLastSlash = path.LastIndexOfAny(new char[] { '\\', '/' });
-                    filename = $"{fileHash}.nca";
-                    string newPath = $"{path.Substring(0, indexOfLastSlash + 1)}{filename}";
-                    File.Move(path, newPath);
-                    path = newPath;
+                    int indexOfLastSlash = Path.LastIndexOfAny(new char[] { '\\', '/' });
+                    FileName = $"{fileHash}.nca";
+                    string newPath = $"{Path.Substring(0, indexOfLastSlash + 1)}{FileName}";
+                    File.Move(Path, newPath);
+                    Path = newPath;
                 }
                 else
                 {
-                    Console.WriteLine("This firmware dump is fishy. Stopping execution. Use the commandline argument \'--fix-hashes\' to fix the filenames");
-                    Environment.Exit(1);
+                    throw new Exception("This firmware dump is fishy. Stopping execution. Use the commandline argument \'--fix-hashes\' to fix the filenames");
                 }
-            }
-            else
-            {
-                if (Config.verbose)
-                    Console.WriteLine("OK!");
             }
         }
     }

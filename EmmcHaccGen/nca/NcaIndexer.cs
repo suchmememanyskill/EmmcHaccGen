@@ -2,92 +2,84 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using LibHac.Common.Keys;
 using LibHac.FsSystem;
 using LibHac.Tools.FsSystem.NcaUtils;
 
 namespace EmmcHaccGen.nca
 {
-    class NcaIndexer
+    public class NcaIndexer
     {
-        string path;
-        public List<NcaFile> files;
-        public Dictionary<string, List<NcaFile>> sortedNcaDict;
-
-        public NcaIndexer() 
+        public List<NcaFile> Files { get; private set; }
+        public Dictionary<string, List<NcaFile>> SortedFiles { get; private set; }
+        public string Version { get; private set; }
+        public bool RequiresV5Save { get; private set; }
+        private string _fwPath;
+        private KeySet _keySet;
+        private bool _fixHashes = false;
+        
+        public NcaIndexer(string fwPath, KeySet keySet, bool fixHashes = false) 
         {
-            path = Config.fwPath;
-            files = new List<NcaFile>();
-            sortedNcaDict = new Dictionary<string, List<NcaFile>>();
-
-            this.Indexer();
-            this.Sorter();
+            Files = new();
+            SortedFiles = new();
+            _fwPath = fwPath;
+            _keySet = keySet;
+            _fixHashes = fixHashes;
+            
+            Indexer();
+            Sorter();
+            VersionExtract();
         }
 
         private void Indexer()
         {
-            foreach (var file in Directory.EnumerateFiles(path, "*.nca").ToArray())
+            foreach (var file in Directory.EnumerateFiles(_fwPath, "*.nca").ToArray())
             {
-                NcaFile ncaFile = new NcaFile();
-                ncaFile.filename = file.Split(new char[]{'/', '\\' } ).Last();
-                ncaFile.path = file;
-                ncaFile.GenHash();
-                ncaFile.AddNcaInfo();
-                files.Add(ncaFile);
+                NcaFile ncaFile = new(_keySet, file, _fixHashes);
+                Files.Add(ncaFile);
             }
         }
 
         private void Sorter()
         {
-            Dictionary<string, List<NcaFile>> NcaDict = new Dictionary<string, List<NcaFile>>();
-            List<string> exclude = new List<string>();
+            Dictionary<string, List<NcaFile>> ncaDict = new();
 
-            if (Config.noExfat)
+            foreach (var nca in Files)
             {
-                exclude.Add("010000000000081B");
-                exclude.Add("010000000000081C");
-            }
-
-            foreach (var nca in files)
-            {
-                if (exclude.Contains(nca.titleId))
-                    continue;
-
-                if (NcaDict.ContainsKey(nca.titleId))
-                    NcaDict[nca.titleId].Add(nca);
+                if (ncaDict.ContainsKey(nca.TitleId))
+                    ncaDict[nca.TitleId].Add(nca);
                 else
                 {
                     List<NcaFile> idpair = new List<NcaFile>();
                     idpair.Add(nca);
-                    NcaDict.Add(nca.titleId, idpair);
+                    ncaDict.Add(nca.TitleId, idpair);
                 }
             }
 
-            for (int i = 0; i < NcaDict.Count; i++)
+            for (int i = 0; i < ncaDict.Count; i++)
             {
-                var ncalist = NcaDict.ElementAt(i);
-                var ncalistsorted = ncalist.Value.OrderBy(i => i.header.ContentType != NcaContentType.Meta).ToList();
-                NcaDict[ncalist.Key] = ncalistsorted;
+                var ncalist = ncaDict.ElementAt(i);
+                var ncalistsorted = ncalist.Value.OrderBy(i => i.Header.ContentType != NcaContentType.Meta).ToList();
+                ncaDict[ncalist.Key] = ncalistsorted;
             }
 
-            foreach (var item in NcaDict.OrderBy(x => Convert.ToInt64(x.Key, 16)))
-                sortedNcaDict.Add(item.Key, item.Value);
+            foreach (var item in ncaDict.OrderBy(x => Convert.ToInt64(x.Key, 16)))
+                SortedFiles.Add(item.Key, item.Value);
         }
 
-        public NcaFile FindNca(string titleid, NcaContentType type)
+        private void VersionExtract()
         {
-            string titleID = titleid.ToUpper();
-            NcaFile file = files.Find(x => x.titleId == titleID && x.header.ContentType == type);
+            NcaFile file = FindNca("0100000000000809", NcaContentType.Meta);
+
             if (file == null)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"Could not find specified Program Id ({titleID})");
-                if (!Config.noExfat)
-                    Console.WriteLine("Consider trying out the '--no-exfat' option");
-                Console.WriteLine("Is your firmware dump valid?");
-                Console.ResetColor();
-                Environment.Exit(0);
-            }
-            return file;
+                throw new Exception("Version NCA (PID: 0100000000000809) was not found");
+            
+            TitleVersion extractedVersion = file.Cnmt.TitleVersion;
+            Version = $"{extractedVersion.Major}.{extractedVersion.Minor}.{extractedVersion.Patch}";
+            RequiresV5Save = extractedVersion.Major >= 5;
         }
+        
+        public NcaFile? FindNca(string titleId, NcaContentType type)
+            => SortedFiles[titleId.ToUpper()]?.Find(x => x.Header.ContentType == type);
     }
 }
