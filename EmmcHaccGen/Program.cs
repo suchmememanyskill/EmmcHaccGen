@@ -67,13 +67,25 @@ namespace EmmcHaccGen
                 return;
             }
 
+            if (mariko)
+                noAutorcm = true;
+
             Program program = new Program();
-            program.Start(keys, fw, noExfat, verbose, showNcaIndex, fixHashes, noAutorcm, mariko);
+            try
+            {
+                program.Start(keys, fw, noExfat, verbose, showNcaIndex, fixHashes, noAutorcm, mariko);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"[Exception] {e.Message}");
+                Console.WriteLine(e.StackTrace);
+                Environment.Exit(1);
+            }
         }
         void Start(string keys, string fwPath, bool noExfat, bool verbose, bool showNcaIndex, bool fixHashes, bool noAutoRcm, bool mariko)
         {
             Console.WriteLine("Indexing NCA files...");
-            LibEmmcHaccGen lib = new(keys, fwPath);
+            LibEmmcHaccGen lib = new(keys, fwPath, fixHashes);
             
             Console.WriteLine("Extracted firmware:");
             Console.WriteLine($"Version: {lib.NcaIndexer.Version}");
@@ -81,6 +93,12 @@ namespace EmmcHaccGen
             Console.WriteLine("Exfat Support: " + (lib.HasExfatCompat ? "Yes" : "No"));
             Console.WriteLine($"NCA Count: {lib.NcaIndexer.Files.Count}");
             Console.WriteLine("\n");
+
+            if (showNcaIndex)
+            {
+                ShowNcaIndex(lib.NcaIndexer, lib.NcaIndexer.Version);
+                return;
+            }
             
             string prefix = (mariko) ? "a" : "NX";
             string destFolder = $"{prefix}-{lib.NcaIndexer.Version}" + (!noExfat ? "_exFAT" : "");

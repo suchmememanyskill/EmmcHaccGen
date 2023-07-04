@@ -92,7 +92,7 @@ namespace EmmcHaccGen.nca
 
             if (fileHash != fileNameHash)
             {
-                Console.Write($"Incorrect hash for file {FileName}.");
+                Console.WriteLine($"Incorrect hash for file {FileName}.");
 
                 if (fixHash)
                 {

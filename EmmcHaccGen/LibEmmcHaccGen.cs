@@ -52,12 +52,12 @@ public class LibEmmcHaccGen
         }
     }
 
-    public LibEmmcHaccGen(string keySetPath, string firmwarePath)
+    public LibEmmcHaccGen(string keySetPath, string firmwarePath, bool fixHashes = false)
     {
-        Load(keySetPath, firmwarePath);
+        Load(keySetPath, firmwarePath, fixHashes);
     }
 
-    private void Load(string keySetPath, string firmwarePath)
+    private void Load(string keySetPath, string firmwarePath, bool fixHashes = false)
     {
         _keySet = ExternalKeyReader.ReadKeyFile(keySetPath);
         FwPath = firmwarePath;
@@ -74,7 +74,7 @@ public class LibEmmcHaccGen
         if (convertCount > 0)
             Console.WriteLine($"Converted folder ncas to files (count: {convertCount})");
         
-        NcaIndexer = new(FwPath, _keySet);
+        NcaIndexer = new(FwPath, _keySet, fixHashes);
         HasExfatCompat = NcaIndexer.FindNca("010000000000081B", NcaContentType.Data) != null &&
                          NcaIndexer.FindNca("010000000000081C", NcaContentType.Data) != null;
     }
