@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using LibHac;
 using System.IO;
-using LibHac.FsSystem.NcaUtils;
 using System.Linq;
+using LibHac.FsSystem;
 
 namespace EmmcHaccGen.nca
 {

@@ -1,17 +1,17 @@
 ﻿using System;
 using EmmcHaccGen.nca;
 using System.Collections.Generic;
-using LibHac;
 using System.IO;
 using EmmcHaccGen.bis;
 using EmmcHaccGen.imkv;
 using LibHac.Fs;
 using LibHac.Common;
-using LibHac.FsSystem.NcaUtils;
 using LibHac.FsSystem;
-using LibHac.FsSystem.Save;
 using System.Linq;
 using LibHac.Fs.Fsa;
+using LibHac.Common.Keys;
+using LibHac.Tools.FsSystem;
+using LibHac.Tools.FsSystem.Save;
 
 namespace EmmcHaccGen
 {
@@ -195,10 +195,12 @@ namespace EmmcHaccGen
             using (IStorage outfile = new LocalStorage($"{destFolder}/SYSTEM/save/8000000000000120", FileAccess.ReadWrite))
             {
                 var save = new SaveDataFileSystem(Config.keyset, outfile, IntegrityCheckLevel.ErrorOnInvalid, true);
-                save.OpenFile(out IFile file, new U8Span("/meta/imkvdb.arc"), OpenMode.AllowAppend | OpenMode.ReadWrite);
+                UniqueRef<IFile> file = new();
+
+                save.OpenFile(ref file, new U8Span("/meta/imkvdb.arc"), OpenMode.AllowAppend | OpenMode.ReadWrite);
                 using (file)
                 {
-                    file.Write(0, imkvdb.bytes.ToArray(), WriteOption.Flush).ThrowIfFailure();
+                    file.Get.Write(0, imkvdb.bytes.ToArray(), WriteOption.Flush).ThrowIfFailure();
                 }
                 save.Commit(Config.keyset).ThrowIfFailure();
             }

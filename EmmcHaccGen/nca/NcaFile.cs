@@ -1,17 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using LibHac;
-using LibHac.Common;
-using LibHac.FsSystem.NcaUtils;
-using LibHac.Fs;
-using LibHac.FsSystem;
 using System.IO;
 using System.Linq;
-using LibHac.FsSystem.Save;
-using EmmcHaccGen.cnmt;
 using System.Security.Cryptography;
+using LibHac.Common;
+using LibHac.Fs;
 using LibHac.Fs.Fsa;
+using LibHac.FsSystem;
+using LibHac.Tools.Ncm;
+using LibHac.Tools.FsSystem;
+using LibHac.Tools.FsSystem.NcaUtils;
+using EmmcHaccGen.cnmt;
 
 namespace EmmcHaccGen.nca
 {
@@ -56,13 +54,14 @@ namespace EmmcHaccGen.nca
             {
                 using IFileSystem fs = data.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.ErrorOnInvalid);
                 string cnmtPath = fs.EnumerateEntries("/", "*.cnmt").Single().FullPath;
+                UniqueRef<IFile> cnmtFile = new();
 
-                fs.OpenFile(out IFile cnmtFile, new U8Span(cnmtPath), OpenMode.Read).ThrowIfFailure();
-                cnmt = new Cnmt(cnmtFile.AsStream());
+                fs.OpenFile(ref cnmtFile, new U8Span(cnmtPath), OpenMode.Read).ThrowIfFailure();
+                cnmt = new Cnmt(cnmtFile.Get.AsStream());
 
-                cnmtFile.GetSize(out long size);
+                cnmtFile.Get.GetSize(out long size);
                 byte[] cnmtRaw = new byte[size];
-                cnmtFile.Read(out long none, 0, cnmtRaw);
+                cnmtFile.Get.Read(out long none, 0, cnmtRaw);
 
                 cnmt_raw = new CnmtRawParser(cnmtRaw);
             }
