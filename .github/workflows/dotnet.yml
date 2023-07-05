@@ -1,0 +1,59 @@
+name: .NET
+
+on:
+  push:
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: windows-latest
+
+    steps:
+    - name: clone repo
+      uses: actions/checkout@v2
+        
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 7.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: CLI Os-Agnostic build
+      run: |
+        cd EmmcHaccGen
+        dotnet publish -o ../CLI -p:Configuration=Release
+
+    - name: GUI Os-Agnostic Build
+      run: |
+        cd EmmcHaccGen.GUI
+        dotnet publish -o ../GUI -p:Configuration=Release
+
+    - name: GUI Windows Build
+      run: |
+        cd EmmcHaccGen.GUI
+        dotnet publish -o ../GUI.Windows -r win-x64 --self-contained -p:PublishSingleFile=true -p:Configuration=Release -p:PublishTrimmed=True
+
+    - name: Upload CLI Os-Agnostic
+      uses: actions/upload-artifact@v2
+      with:
+        name: EmmcHaccGen.CLI
+        path: |
+          ./CLI
+
+    - name: Upload GUI Os-Agnostic
+      uses: actions/upload-artifact@v2
+      with:
+        name: EmmcHaccGen.GUI
+        path: |
+          ./GUI
+
+    - name: Upload GUI Windows
+      uses: actions/upload-artifact@v2
+      with:
+        name: EmmcHaccGen.GUI.Windows
+        path: |
+          ./GUI.Windows

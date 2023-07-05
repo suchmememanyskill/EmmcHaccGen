@@ -6,7 +6,7 @@
         x:Class="EmmcHaccGen.GUI.MainWindow"
         Title="EmmcHaccGen.GUI"
         Width="500"
-        Height="468"
+        Height="458"
         CanResize="False">
     <StackPanel>
         <Border CornerRadius="5" Background="#333" Margin="5" Padding="5">
