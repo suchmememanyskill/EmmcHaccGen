@@ -7,6 +7,8 @@
         <TrimMode>copyused</TrimMode>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <LangVersion>11</LangVersion>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     </PropertyGroup>
     <ItemGroup>
         <None Remove=".gitignore" />

@@ -7,6 +7,8 @@
     <RepositoryUrl>https://github.com/suchmememanyskill/EmmcHaccGen</RepositoryUrl>
     <LangVersion>11</LangVersion>
     <Nullable>enable</Nullable>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
