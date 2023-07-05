@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -60,7 +61,6 @@ namespace EmmcHaccGen.GUI
         private async void OnFileInputChanged()
         {
             _lib = null;
-            FileStatus.Foreground = Brushes.Red;
             StageTwoPanel.IsEnabled = false;
             
             if (!File.Exists(ProdKeysInput.Text) || !Directory.Exists(FirmwareInput.Text))
@@ -78,10 +78,8 @@ namespace EmmcHaccGen.GUI
                 FileStatus.Content = $"[Exception] {e.Message}";
                 return;
             }
-
-            FileStatus.Foreground = Brushes.White;
+            
             FileStatus.Content = $"Firmware {_lib.NcaIndexer.Version}";
-
             StageTwoPanel.IsEnabled = true;
 
             ExfatToggle.IsEnabled = _lib.HasExfatCompat;
