@@ -106,9 +106,11 @@ public class LibEmmcHaccGen
 
         if (autorcm && mariko)
             throw new Exception("Generating Mariko Firmware with Autorcm is not allowed");
-        
-        BisAssembler bisAssembler = new BisAssembler(NcaIndexer, path, exfat, autorcm, mariko);
-        BisFileAssembler bisFileAssembler = new BisFileAssembler($"{NcaIndexer.Version}{((exfat) ? "_exFAT" : "")}", bisAssembler, $"{path}/boot.bis", exfat);
+
+        BisAssembler bisAssembler = new(NcaIndexer, exfat, autorcm, mariko);
+        bisAssembler.Save(path);
+        BisFileAssembler bisFileAssembler = new(bisAssembler);
+        bisFileAssembler.Save($"{path}/boot.bis");
     }
 
     public void WriteSystem(string path, bool exfat, bool useV5Save, bool dumpImkvdb = false)

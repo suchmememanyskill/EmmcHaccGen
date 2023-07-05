@@ -1,0 +1,37 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="EmmcHaccGen.GUI.MainWindow"
+        Title="EmmcHaccGen.GUI"
+        Width="500"
+        Height="468"
+        CanResize="False">
+    <StackPanel>
+        <Border CornerRadius="5" Background="#333" Margin="5" Padding="5">
+            <StackPanel Spacing="10">
+                <Label Margin="0,0,10,0">Prod.keys Location</Label>
+                <DockPanel>
+                    <Button Margin="10,0,0,0" DockPanel.Dock="Right" Background="OrangeRed" Name="ProdKeysInputButton">Browse</Button>
+                    <TextBox Watermark="Input location of prod.keys here" Name="ProdKeysInput"></TextBox>
+                </DockPanel>
+                <Label Margin="0,0,10,0">Firmware Location</Label>
+                <DockPanel>
+                    <Button Margin="10,0,0,0" DockPanel.Dock="Right" Background="OrangeRed" Name="FirmwareInputButton">Browse</Button>
+                    <TextBox Watermark="Input location of firmware files here" Name="FirmwareInput"></TextBox>
+                </DockPanel>
+                <Label Name="FileStatus" HorizontalAlignment="Center" Margin="0,5,0,0">Welcome to EmmcHaccGen!</Label>
+            </StackPanel>
+        </Border>
+
+        <Border CornerRadius="5" Background="#333" Margin="5" Padding="5" Name="StageTwoPanel" IsEnabled="False">
+            <StackPanel Spacing="10">
+                <ToggleSwitch Name="ExfatToggle" Content="ExFAT Support" IsChecked="True" />
+                <ToggleSwitch Name="AutoRcmToggle" Content="Enable AutoRCM" IsChecked="True" />
+                <ToggleSwitch Name="MarikoToggle" Content="Generate Mariko Firmware" IsChecked="False" />
+                <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="OrangeRed" Name="GenerateButton">Generate</Button>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</Window>

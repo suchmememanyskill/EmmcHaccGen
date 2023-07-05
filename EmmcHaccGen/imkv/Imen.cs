@@ -9,6 +9,7 @@ namespace EmmcHaccGen.imkv
 {
     class Imen
     {
+        // TODO: Turn to read-only properties
         public List<byte> bytes;
         private List<byte> key, value;
         private List<NcaFile> pair;

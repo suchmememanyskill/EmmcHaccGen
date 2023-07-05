@@ -10,9 +10,9 @@ namespace EmmcHaccGen.bis
 {
     class BisExtractor
     {
+        // TODO: Turn to read-only properties
         public byte[] bct, pkg1, pkg2;
-
-        public BisExtractor() { }
+        
         public BisExtractor(NcaFile nca, bool autorcm, bool mariko)
         {
             this.Extract(nca, autorcm, mariko);

@@ -121,7 +121,7 @@ namespace EmmcHaccGen
             lib.WriteBis(destPath, !noAutoRcm, !noExfat, mariko);
             
             Console.WriteLine("Generating System...");
-            lib.WriteSystem(destFolder, !noExfat, lib.NcaIndexer.RequiresV5Save || mariko, verbose);
+            lib.WriteSystem(destPath, !noExfat, lib.NcaIndexer.RequiresV5Save || mariko, verbose);
         }
     }
 }

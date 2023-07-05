@@ -78,8 +78,10 @@ namespace EmmcHaccGen.nca
             Version = $"{extractedVersion.Major}.{extractedVersion.Minor}.{extractedVersion.Patch}";
             RequiresV5Save = extractedVersion.Major >= 5;
         }
-        
+
         public NcaFile? FindNca(string titleId, NcaContentType type)
-            => SortedFiles[titleId.ToUpper()]?.Find(x => x.Header.ContentType == type);
+            => SortedFiles.ContainsKey(titleId.ToUpper())
+                ? SortedFiles[titleId.ToUpper()]?.Find(x => x.Header.ContentType == type)
+                : null;
     }
 }
