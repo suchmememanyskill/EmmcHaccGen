@@ -29,11 +29,24 @@ namespace EmmcHaccGen.GUI
             FirmwareInput.TextChanged += (x, y) => Dispatcher.UIThread.Post(OnFileInputChanged);
             MarikoToggle.IsCheckedChanged += (x, y) => OnMarikoToggleChanged();
             GenerateButton.Command = new LambdaCommand(x => Generate());
+
+            if (File.Exists("prod.keys"))
+                ProdKeysInput.Text = "prod.keys";
         }
 
         private async Task OnBrowseProdKeys()
         {
-            OpenFileDialog dialog = new();
+            OpenFileDialog dialog = new()
+            {
+                Filters = new()
+                {
+                    new()
+                    {
+                        Name = "Keys",
+                        Extensions = {"keys"}
+                    }
+                }
+            };
             dialog.AllowMultiple = false;
             string[]? results = await dialog.ShowAsync(this);
 
