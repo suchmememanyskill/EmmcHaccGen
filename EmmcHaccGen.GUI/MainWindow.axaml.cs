@@ -88,7 +88,7 @@ namespace EmmcHaccGen.GUI
             }
             catch (Exception e)
             {
-                FileStatus.Content = $"[Exception] {e.Message}";
+                FileStatus.Content = e.Message;
                 return;
             }
             
