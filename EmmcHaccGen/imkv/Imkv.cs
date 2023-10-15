@@ -9,8 +9,8 @@ namespace EmmcHaccGen.imkv
 {
     class Imkv
     {
-        private NcaIndexer _indexer;
-        private List<string> _skipTitles;
+        private NcaIndexer? _indexer;
+        private List<string>? _skipTitles;
         public byte[] Result { get; private set; }
         
         public Imkv(NcaIndexer ncaIndex, List<string>? skipTitles = null)
@@ -19,9 +19,12 @@ namespace EmmcHaccGen.imkv
             _skipTitles = skipTitles ?? new();
             Result = Build();
         }
-        
-        public byte[] Build()
-        {
+
+        public Imkv(List<Imen> imens) {
+            Result = Imkv.BytesFromImens(imens);
+        }
+
+        public static byte[] BytesFromImens(List<Imen> imens) {
             List<byte> bytes = new();
             
             bytes.Add(0x49); // Spells out IMKV
@@ -34,20 +37,25 @@ namespace EmmcHaccGen.imkv
             bytes.Add(0x0);
             bytes.Add(0x0);
 
-            List<Imen> imens = new();
-            
-            foreach(var entry in _indexer.SortedFiles.Where(x => !_skipTitles.Contains(x.Key)))
-            {
-                imens.Add(new Imen(entry.Value));
-            }
-            
             bytes.AddRange(BitConverter.GetBytes((uint)imens.Count));
             foreach (var single in imens)
             {
                 bytes.AddRange(single.bytes);
             }
 
-            return bytes.ToArray();
+            return bytes.ToArray();  
+        }
+        
+        public byte[] Build()
+        {
+            List<Imen> imens = new();
+            
+            foreach(var entry in _indexer!.SortedFiles.Where(x => !_skipTitles!.Contains(x.Key)))
+            {
+                imens.Add(new Imen(entry.Value));
+            }
+
+            return Imkv.BytesFromImens(imens).ToArray();
         }
 
         public void DumpToFile(string path)
