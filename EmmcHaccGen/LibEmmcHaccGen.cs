@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
+using System.Security.Cryptography;
 using EmmcHaccGen.bis;
 using EmmcHaccGen.imkv;
 using EmmcHaccGen.nca;
@@ -11,6 +13,7 @@ using LibHac.Common.Keys;
 using LibHac.Fs;
 using LibHac.Fs.Fsa;
 using LibHac.FsSystem;
+using LibHac.Ncm;
 using LibHac.Tools.FsSystem;
 using LibHac.Tools.FsSystem.NcaUtils;
 using LibHac.Tools.FsSystem.Save;
@@ -113,13 +116,35 @@ public class LibEmmcHaccGen
         bisFileAssembler.Save($"{path}/boot.bis");
     }
 
-    void WriteSave(string path, string saveid, IDictionary<string, byte[]> files, bool useV5Save) {
+    void CursedSavedataIdPatching(FileStream fp, ProgramId saveid) {
+        // im sorry
+
+        var id = BitConverter.GetBytes(saveid.Value);
+    
+        // patch Extra Data A + B
+        fp.Seek(0x6d8 + 0x18, SeekOrigin.Begin);
+        fp.Write(id, 0, 0x8);
+        fp.Seek(0x8d8 + 0x18, SeekOrigin.Begin);
+        fp.Write(id, 0, 0x8);
+
+        // fixup DISF hash that we just invalidated
+        var buf = new byte[0x4000 - 0x300];
+        fp.Seek(0x300, SeekOrigin.Begin);
+        fp.Read(buf, 0, 0x4000 - 0x300);
+        var hasher = SHA256.Create();
+        byte[] hash = hasher.ComputeHash(buf);
+        fp.Seek(0x100 + 0x8, SeekOrigin.Begin);
+        fp.Write(hash, 0, 0x20);
+    }
+
+    void WriteSave(string path, ProgramId saveid, IDictionary<string, byte[]> files, bool useV5Save) {
         FileStream destSave = new FileStream($"{path}/SYSTEM/save/{saveid}", FileMode.CreateNew);
         string saveType = (useV5Save) ? "v5" : "v4";
         Assembly.GetExecutingAssembly().GetManifestResourceStream($"EmmcHaccGen.save.save.stub.{saveType}")!.CopyTo(destSave);
+        CursedSavedataIdPatching(destSave, saveid);
         destSave.Close();
 
-        Console.WriteLine($"Writing save [{saveid}]...");
+        Console.WriteLine($"Writing save [{path}/SYSTEM/save/{saveid}]...");
         using (IStorage outfile = new LocalStorage($"{path}/SYSTEM/save/{saveid}", FileAccess.ReadWrite))
         {
             var save = new SaveDataFileSystem(_keySet, outfile, IntegrityCheckLevel.ErrorOnInvalid, true);
@@ -171,14 +196,14 @@ public class LibEmmcHaccGen
         if (dumpImkvdb)
             ncm_imkvdb.DumpToFile($"{path}/data.arc");
 
-        WriteSave(path, "8000000000000120", new Dictionary<string, byte[]>(){
+        WriteSave(path, new ProgramId(0x8000000000000120), new Dictionary<string, byte[]>(){
             {"/meta/imkvdb.arc", ncm_imkvdb.Result}
         }, useV5Save);
         UInt64 save_size = (UInt64)new FileInfo($"{path}/SYSTEM/save/8000000000000120").Length;
-        Imen imen = new Imen(new LibHac.Ncm.ProgramId(0x8000000000000000), save_size);
+        Imen imen = new Imen(new ProgramId(0x8000000000000000), save_size);
         Imkv fs_save_index = new Imkv(new List<Imen>(){imen});
 
-        WriteSave(path, "8000000000000000", new Dictionary<string, byte[]>(){
+        WriteSave(path, new ProgramId(0x8000000000000000), new Dictionary<string, byte[]>(){
             {"/imkvdb.arc", fs_save_index.Result},
             {"/lastPublishedId", BitConverter.GetBytes((ulong)0)}
         }, useV5Save);
