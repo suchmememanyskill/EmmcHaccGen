@@ -18,7 +18,7 @@ namespace EmmcHaccGen.imkv
         public List<byte> ToBytes() {
             byte[] ret = new byte[0x40];
 
-            Buffer.BlockCopy(ret, 0x18, BitConverter.GetBytes(saveid.Value), 0, 8);
+            Buffer.BlockCopy(BitConverter.GetBytes(saveid.Value), 0, ret, 0x18, 8);
 
             return ret.ToList();
         }
@@ -36,8 +36,8 @@ namespace EmmcHaccGen.imkv
         public List<byte> ToBytes() {
             byte[] ret = new byte[0x40];
 
-            Buffer.BlockCopy(ret, 0x0, BitConverter.GetBytes(saveid.Value), 0, 8);
-            Buffer.BlockCopy(ret, 0x8, BitConverter.GetBytes(save_size), 0, 8);
+            Buffer.BlockCopy(BitConverter.GetBytes(saveid.Value), 0, ret, 0, 8);
+            Buffer.BlockCopy(BitConverter.GetBytes(save_size), 0, ret, 0x8, 8);
 
             return ret.ToList();
         }
