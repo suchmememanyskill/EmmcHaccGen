@@ -196,11 +196,14 @@ public class LibEmmcHaccGen
         if (dumpImkvdb)
             ncm_imkvdb.DumpToFile($"{path}/data.arc");
 
-        WriteSave(path, new ProgramId(0x8000000000000120), new Dictionary<string, byte[]>(){
+        var ncm_saveid = new ProgramId(0x8000000000000120);
+        WriteSave(path, ncm_saveid, new Dictionary<string, byte[]>(){
             {"/meta/imkvdb.arc", ncm_imkvdb.Result}
         }, useV5Save);
+
+        // build the fs save index imkvdb, for now this only contains the ncm content index save
         UInt64 save_size = (UInt64)new FileInfo($"{path}/SYSTEM/save/8000000000000120").Length;
-        Imen imen = new Imen(new ProgramId(0x8000000000000000), save_size);
+        Imen imen = new Imen(ncm_saveid, save_size);
         Imkv fs_save_index = new Imkv(new List<Imen>(){imen});
 
         WriteSave(path, new ProgramId(0x8000000000000000), new Dictionary<string, byte[]>(){
