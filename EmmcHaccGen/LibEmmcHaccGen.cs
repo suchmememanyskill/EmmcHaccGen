@@ -59,7 +59,18 @@ public class LibEmmcHaccGen
 
     private void Load(string keySetPath, string firmwarePath, bool fixHashes = false)
     {
-        _keySet = ExternalKeyReader.ReadKeyFile(keySetPath);
+        _keySet = KeySet.CreateDefaultKeySet();
+        _keySet.SetMode(KeySet.Mode.Prod);
+        var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+        var libHac = loadedAssemblies.FirstOrDefault(x => x.GetName().Name == "LibHac")!;
+        var defaultKeySet = libHac.GetType("LibHac.Common.Keys.DefaultKeySet")!;
+        List<KeyInfo> keyInfos = (List<KeyInfo>)defaultKeySet.GetMethod("CreateKeyList").Invoke(null, null)!;
+        keyInfos.Add(new KeyInfo(252, KeyInfo.KeyType.CommonDrvd, "save_mac_key", (set, _) => set.DeviceUniqueSaveMacKeys[0]));
+        
+        using var storage = new FileStream(keySetPath, FileMode.Open, FileAccess.Read);
+        ExternalKeyReader.ReadMainKeys(_keySet, storage, keyInfos);
+        _keySet.DeriveKeys();
+        
         FwPath = firmwarePath;
         
         int convertCount = 0;
