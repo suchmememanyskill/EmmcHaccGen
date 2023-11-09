@@ -35,7 +35,9 @@ jobs:
     - name: GUI Windows Build
       run: |
         cd EmmcHaccGen.GUI
-        dotnet publish -o ../GUI.Windows -r win-x64 --self-contained -p:PublishSingleFile=true -p:Configuration=Release -p:PublishTrimmed=True
+        dotnet publish -o ../GUI.Windows -r win-x64 --self-contained -p:PublishSingleFile=true -p:Configuration=Release
+        cd ../GUI.Windows
+        del EmmcHaccGen.exe
 
     - name: Upload CLI Os-Agnostic
       uses: actions/upload-artifact@v2
