@@ -4,9 +4,45 @@ using System.Linq;
 using EmmcHaccGen.nca;
 using EmmcHaccGen.cnmt;
 using LibHac.Tools.Ncm;
+using LibHac.Ncm;
 
 namespace EmmcHaccGen.imkv
 {
+    class SaveDataAttribute {
+        ProgramId saveid;
+
+        public SaveDataAttribute(ProgramId saveid) {
+            this.saveid = saveid;
+        }
+
+        public List<byte> ToBytes() {
+            byte[] ret = new byte[0x40];
+
+            Buffer.BlockCopy(BitConverter.GetBytes(saveid.Value), 0, ret, 0x18, 8);
+
+            return ret.ToList();
+        }
+    }
+
+    class SaveImenValue {
+        ProgramId saveid;
+        UInt64 save_size;
+
+        public SaveImenValue(ProgramId saveid, UInt64 save_size) {
+            this.saveid = saveid;
+            this.save_size = save_size;
+        }
+
+        public List<byte> ToBytes() {
+            byte[] ret = new byte[0x40];
+
+            Buffer.BlockCopy(BitConverter.GetBytes(saveid.Value), 0, ret, 0, 8);
+            Buffer.BlockCopy(BitConverter.GetBytes(save_size), 0, ret, 0x8, 8);
+
+            return ret.ToList();
+        }
+    }
+
     class Imen
     {
         // TODO: Turn to read-only properties
@@ -38,6 +74,13 @@ namespace EmmcHaccGen.imkv
             this.pair = pair;
             this.Gen();
         }
+        public Imen(ProgramId saveid, UInt64 save_size) {
+            this.key = new SaveDataAttribute(saveid).ToBytes();
+            this.value = new SaveImenValue(saveid, save_size).ToBytes();
+            bytes = new List<byte>();
+            pair = new List<NcaFile>();
+            this.Gen();
+        }
 
         public void Gen()
         {
@@ -46,8 +89,10 @@ namespace EmmcHaccGen.imkv
             bytes.Add(0x45);
             bytes.Add(0x4E);
 
-            GenKey();
-            GenValue();
+            if (key.Count() == 0 || value.Count() == 0) {
+                GenKey();
+                GenValue();
+            }
 
             bytes.AddRange(BitConverter.GetBytes((UInt32)key.Count));
             bytes.AddRange(BitConverter.GetBytes((UInt32)value.Count));
