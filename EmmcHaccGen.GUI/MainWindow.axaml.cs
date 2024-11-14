@@ -84,7 +84,7 @@ namespace EmmcHaccGen.GUI
 
             try
             {
-                _lib =  new LibEmmcHaccGen(ProdKeysInput.Text, FirmwareInput.Text, true);
+                _lib =  new LibEmmcHaccGen(ProdKeysInput.Text, FirmwareInput.Text);
             }
             catch (Exception e)
             {
