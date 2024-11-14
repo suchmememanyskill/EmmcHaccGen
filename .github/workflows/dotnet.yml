@@ -40,21 +40,21 @@ jobs:
         del EmmcHaccGen.exe
 
     - name: Upload CLI Os-Agnostic
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: EmmcHaccGen.CLI
         path: |
           ./CLI
 
     - name: Upload GUI Os-Agnostic
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: EmmcHaccGen.GUI
         path: |
           ./GUI
 
     - name: Upload GUI Windows
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: EmmcHaccGen.GUI.Windows
         path: |
