@@ -79,9 +79,12 @@ namespace EmmcHaccGen.nca
             RequiresV5Save = extractedVersion.Major >= 5;
         }
 
-        public NcaFile? FindNca(string titleId, NcaContentType type)
+        public NcaFile? FindNcaOrDefault(string titleId, NcaContentType type, NcaFile? fallback = default)
             => SortedFiles.ContainsKey(titleId.ToUpper())
                 ? SortedFiles[titleId.ToUpper()]?.Find(x => x.Header.ContentType == type)
-                : null;
+                : fallback;
+
+        public NcaFile FindNca(string titleId, NcaContentType type)
+            => FindNcaOrDefault(titleId, type) ?? throw new FileNotFoundException($"Title '{titleId}' of type '{type}' was not found.");
     }
 }

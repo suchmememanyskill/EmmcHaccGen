@@ -89,8 +89,8 @@ public class LibEmmcHaccGen
             Console.WriteLine($"Converted folder ncas to files (count: {convertCount})");
         
         NcaIndexer = new(FwPath, _keySet, fixHashes);
-        HasExfatCompat = NcaIndexer.FindNca("010000000000081B", NcaContentType.Data) != null &&
-                         NcaIndexer.FindNca("010000000000081C", NcaContentType.Data) != null;
+        HasExfatCompat = NcaIndexer.FindNcaOrDefault("010000000000081B", NcaContentType.Data) != null &&
+                         NcaIndexer.FindNcaOrDefault("010000000000081C", NcaContentType.Data) != null;
     }
 
     public void Write(string basePath, bool autorcm, bool exfat, bool mariko, bool overwrite, bool verbose = false)
