@@ -19,6 +19,7 @@ namespace EmmcHaccGen.GUI
     public partial class MainWindow : Window
     {
         private LibEmmcHaccGen? _lib = null;
+        private string? _lastGeneratedFolder = null;  // track generated folder
         
         public MainWindow()
         {
@@ -29,6 +30,7 @@ namespace EmmcHaccGen.GUI
             FirmwareInput.TextChanged += (x, y) => Dispatcher.UIThread.Post(OnFileInputChanged);
             MarikoToggle.IsCheckedChanged += (x, y) => OnMarikoToggleChanged();
             GenerateButton.Command = new LambdaCommand(x => Generate());
+            PrepareSdButton.Command = new LambdaCommand(x => PrepareSdCard());
 
             if (File.Exists("prod.keys"))
                 ProdKeysInput.Text = "prod.keys";
@@ -158,7 +160,98 @@ namespace EmmcHaccGen.GUI
                 return;
             }
 
-            OpenFolder(destPath);
+            // enable SD card preparation after successful generation
+            _lastGeneratedFolder = destPath;
+            StageThreePanel.IsEnabled = true;
+            SdPrepStatus.Text = "✓ Files generated! Ready to prepare SD card.";
+            
+        }
+        
+        // microSD Card Preparation method
+        private async void PrepareSdCard()
+        {
+            if (string.IsNullOrEmpty(_lastGeneratedFolder) || !Directory.Exists(_lastGeneratedFolder))
+            {
+                await MessageBoxManager.GetMessageBoxStandard(new()
+                {
+                    ButtonDefinitions = ButtonEnum.Ok,
+                    ContentTitle = "Error",
+                    ContentMessage = "Please generate files first!"
+                }).ShowAsync();
+                return;
+            }
+
+            // prompt for SD card location
+            OpenFolderDialog dialog = new();
+            string? sdCardPath = await dialog.ShowAsync(this);
+            
+            if (string.IsNullOrWhiteSpace(sdCardPath) || !Directory.Exists(sdCardPath))
+            {
+                return;
+            }
+
+            // confirm with user
+            var confirmBox = MessageBoxManager.GetMessageBoxStandard(new()
+            {
+                ButtonDefinitions = ButtonEnum.YesNo,
+                ContentTitle = "Prepare SD Card",
+                ContentMessage = $"This will create folders on:\n{sdCardPath}\n\n" +
+                                 "And copy/download:\n" +
+                                 "- boot.bis → MMCRebuild/\n" +
+                                 "- SYSTEM folder → MMCRebuild/\n" +
+                                 "- SystemRestoreV3.te → MMCRebuild/\n" +
+                                 "- TegraExplorer.bin → bootloader/payloads/\n\n" +
+                                 "Continue?"
+            });
+
+            var confirmResult = await confirmBox.ShowAsync();
+            
+            if (confirmResult != ButtonResult.Yes)
+                return;
+
+            // disable button during generation/download/copy operation
+            PrepareSdButton.IsEnabled = false;
+            SdPrepStatus.Text = "Preparing SD card...";
+
+            try
+            {
+                // create SD prep utility and run it
+                var sdPrep = new SdCardPreparation(_lastGeneratedFolder, (message) =>
+                {
+                    // update UI
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        SdPrepStatus.Text = message;
+                    });
+                });
+
+                await sdPrep.PrepareSDCardAsync(sdCardPath);
+                
+                await MessageBoxManager.GetMessageBoxStandard(new()
+                {
+                    ButtonDefinitions = ButtonEnum.Ok,
+                    ContentTitle = "Success",
+                    ContentMessage = $"SD card prepared successfully!\n\n" +
+                                     $"Files copied to:\n{sdCardPath}\n\n" +
+                                     "Please return to the MMC Rebuild guide for the next steps."
+                }).ShowAsync();
+
+            }
+            catch (Exception ex)
+            {
+                await MessageBoxManager.GetMessageBoxStandard(new()
+                {
+                    ButtonDefinitions = ButtonEnum.Ok,
+                    ContentTitle = "Error",
+                    ContentMessage = $"Failed to prepare SD card:\n{ex.Message}"
+                }).ShowAsync();
+                
+                SdPrepStatus.Text = $"✗ Error: {ex.Message}";
+            }
+            finally
+            {
+                PrepareSdButton.IsEnabled = true;
+            }
         }
         
         private static void OpenFolder(string path)

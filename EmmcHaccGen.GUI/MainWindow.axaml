@@ -6,19 +6,19 @@
         x:Class="EmmcHaccGen.GUI.MainWindow"
         Title="EmmcHaccGen.GUI"
         Width="500"
-        Height="458"
+        Height="600"
         CanResize="False">
     <StackPanel Background="#2FFF">
         <StackPanel Spacing="10" Margin="10">
-            <Label Margin="0,0,10,0">Prod.keys Location</Label>
+            <Label Margin="0,0,10,0">Prod.keys Location (usually sd:/switch)</Label>
             <DockPanel>
                 <Button Margin="10,0,0,0" DockPanel.Dock="Right" Background="{DynamicResource SystemAccentColor}" Name="ProdKeysInputButton">Browse</Button>
                 <TextBox Watermark="Input location of prod.keys here" Name="ProdKeysInput"></TextBox>
             </DockPanel>
-            <Label Margin="0,0,10,0">Firmware Location</Label>
+            <Label Margin="0,0,10,0">Firmware Folder Location (usually sd:/tegraexplorer/Firmware)</Label>
             <DockPanel>
                 <Button Margin="10,0,0,0" DockPanel.Dock="Right" Background="{DynamicResource SystemAccentColor}" Name="FirmwareInputButton">Browse</Button>
-                <TextBox Watermark="Input location of firmware files here" Name="FirmwareInput"></TextBox>
+                <TextBox Watermark="Input location of firmware folder here" Name="FirmwareInput"></TextBox>
             </DockPanel>
             <Label Name="FileStatus" HorizontalAlignment="Center" Margin="0,5,0,0">Welcome to EmmcHaccGen!</Label>
         </StackPanel>
@@ -28,6 +28,13 @@
             <ToggleSwitch Margin="5,0,0,0" Name="AutoRcmToggle" Content="Enable AutoRCM" IsChecked="True" />
             <ToggleSwitch Margin="5,0,0,0" Name="MarikoToggle" Content="Generate Mariko Firmware" IsChecked="False" />
             <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="{DynamicResource SystemAccentColor}" Name="GenerateButton">Generate</Button>
+        </StackPanel>
+        
+        <StackPanel Spacing="10" Margin="10" Name="StageThreePanel" IsEnabled="False">
+            <Separator Margin="0,5,0,5"/>
+            <Label HorizontalAlignment="Center">SD Card Preparation</Label>
+            <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="{DynamicResource SystemAccentColor}" Name="PrepareSdButton">Prepare SD Card</Button>
+            <TextBlock Name="SdPrepStatus" TextWrapping="Wrap" Margin="5,0,5,0" FontSize="11" Foreground="Gray"></TextBlock>
         </StackPanel>
     </StackPanel>
 </Window>
