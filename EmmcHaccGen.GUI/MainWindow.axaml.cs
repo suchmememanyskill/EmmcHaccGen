@@ -248,8 +248,9 @@ namespace EmmcHaccGen.GUI
                     ContentTitle = "Success",
                     ContentMessage = $"SD card prepared successfully!\n\n" +
                                      $"Files copied to:\n{sdCardPath}\n\n" +
-                                     "Please return to the MMC Rebuild guide for the next steps."
-                }).ShowAsync();
+                                     "Please return to the MMC Rebuild guide for the next steps.",
+                    Topmost = true
+                }).ShowWindowAsync();
 
             }
             catch (Exception ex)
@@ -261,8 +262,9 @@ namespace EmmcHaccGen.GUI
                 {
                     ButtonDefinitions = ButtonEnum.Ok,
                     ContentTitle = "Error",
-                    ContentMessage = $"Failed to prepare SD card:\n{ex.Message}"
-                }).ShowAsync();
+                    ContentMessage = $"Failed to prepare SD card:\n{ex.Message}",
+                    Topmost = true
+                }).ShowWindowAsync();
                 
                 SdPrepStatus.Text = $"✗ Error: {ex.Message}";
             }
