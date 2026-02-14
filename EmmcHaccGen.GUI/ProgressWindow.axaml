@@ -1,0 +1,27 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="EmmcHaccGen.GUI.ProgressWindow"
+        Title="Preparing SD Card"
+        Width="400"
+        Height="150"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+    <StackPanel Margin="20" Spacing="15">
+        <TextBlock Name="StatusText" 
+                   Text="Initializing..." 
+                   TextAlignment="Center"
+                   FontSize="14"/>
+        
+        <ProgressBar Name="ProgressBar" 
+                     Height="25"
+                     Minimum="0" 
+                     Maximum="100" 
+                     Value="0"/>
+        
+        <TextBlock Name="PercentText" 
+                   Text="0%" 
+                   TextAlignment="Center"
+                   FontSize="12"
+                   Foreground="Gray"/>
+    </StackPanel>
+</Window>

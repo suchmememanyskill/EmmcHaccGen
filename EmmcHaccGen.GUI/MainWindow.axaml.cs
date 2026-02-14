@@ -213,19 +213,34 @@ namespace EmmcHaccGen.GUI
             PrepareSdButton.IsEnabled = false;
             SdPrepStatus.Text = "Preparing SD card...";
 
+            // create and show progress window
+            var progressWindow = new ProgressWindow();
+            progressWindow.Show(this);
+
             try
             {
-                // create SD prep utility and run it
-                var sdPrep = new SdCardPreparation(_lastGeneratedFolder, (message) =>
-                {
-                    // update UI
-                    Dispatcher.UIThread.Post(() =>
+                // create SD prep utility with progress callback
+                var sdPrep = new SdCardPreparation(
+                    _lastGeneratedFolder, 
+                    (message) =>
                     {
-                        SdPrepStatus.Text = message;
-                    });
-                });
+                        // update UI
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            SdPrepStatus.Text = message;
+                        });
+                    },
+                    (percentage, operation) =>
+                    {
+                        // update progress dialog
+                        progressWindow.UpdateProgress(percentage, operation);
+                    }
+                );
 
                 await sdPrep.PrepareSDCardAsync(sdCardPath);
+                
+                // close progress window
+                progressWindow.Close();
                 
                 await MessageBoxManager.GetMessageBoxStandard(new()
                 {
@@ -239,6 +254,9 @@ namespace EmmcHaccGen.GUI
             }
             catch (Exception ex)
             {
+                // close progress window on error
+                progressWindow.Close();
+                
                 await MessageBoxManager.GetMessageBoxStandard(new()
                 {
                     ButtonDefinitions = ButtonEnum.Ok,
@@ -252,14 +270,6 @@ namespace EmmcHaccGen.GUI
             {
                 PrepareSdButton.IsEnabled = true;
             }
-        }
-        
-        private static void OpenFolder(string path)
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                Process.Start("explorer.exe", "\"" + path.Replace("/", "\\") + "\""); // I love windows hacks
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                Process.Start("xdg-open", $"\"{path}\"");
         }
     }
 }
