@@ -5,6 +5,7 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="EmmcHaccGen.GUI.MainWindow"
         Title="EmmcHaccGen.GUI"
+        Icon="avares://EmmcHaccGen.GUI/Assets/logo.png"
         Width="500"
         Height="600"
         CanResize="False">

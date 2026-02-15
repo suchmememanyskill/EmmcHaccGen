@@ -131,7 +131,9 @@ namespace EmmcHaccGen.GUI
                     .GetMessageBoxStandard(new MessageBoxStandardParams{
                         ButtonDefinitions = ButtonEnum.YesNo,
                         ContentTitle = "Output already exists",
-                        ContentMessage = "A firmware folder already exists at the chosen destination. Overwrite?"
+                        ContentMessage = "A firmware folder already exists at the chosen destination. Overwrite?",
+                        Icon = MsBox.Avalonia.Enums.Icon.Warning,
+                        WindowIcon = this.Icon
                     });
 
                 var msBoxResult = await msBox.ShowAsync();
@@ -155,7 +157,9 @@ namespace EmmcHaccGen.GUI
                 {
                     ButtonDefinitions = ButtonEnum.Ok,
                     ContentTitle = "Failure Generating Firmware",
-                    ContentMessage = e.Message
+                    ContentMessage = e.Message,
+                    Icon = MsBox.Avalonia.Enums.Icon.Error,
+                    WindowIcon = this.Icon
                 }).ShowAsync();
                 return;
             }
@@ -176,7 +180,9 @@ namespace EmmcHaccGen.GUI
                 {
                     ButtonDefinitions = ButtonEnum.Ok,
                     ContentTitle = "Error",
-                    ContentMessage = "Please generate files first!"
+                    ContentMessage = "Please generate files first!",
+                    Icon = MsBox.Avalonia.Enums.Icon.Error,
+                    WindowIcon = this.Icon
                 }).ShowAsync();
                 return;
             }
@@ -201,7 +207,9 @@ namespace EmmcHaccGen.GUI
                                  "- SYSTEM folder → MMCRebuild/\n" +
                                  "- SystemRestoreV3.te → MMCRebuild/\n" +
                                  "- TegraExplorer.bin → bootloader/payloads/\n\n" +
-                                 "Continue?"
+                                 "Continue?",
+                Icon = MsBox.Avalonia.Enums.Icon.Question,
+                WindowIcon = this.Icon
             });
 
             var confirmResult = await confirmBox.ShowAsync();
@@ -249,7 +257,9 @@ namespace EmmcHaccGen.GUI
                     ContentMessage = $"SD card prepared successfully!\n\n" +
                                      $"Files copied to:\n{sdCardPath}\n\n" +
                                      "Please return to the MMC Rebuild guide for the next steps.",
-                    Topmost = true
+                    Topmost = true,
+                    Icon = MsBox.Avalonia.Enums.Icon.Success,
+                    WindowIcon = this.Icon
                 }).ShowWindowAsync();
 
             }
@@ -263,7 +273,9 @@ namespace EmmcHaccGen.GUI
                     ButtonDefinitions = ButtonEnum.Ok,
                     ContentTitle = "Error",
                     ContentMessage = $"Failed to prepare SD card:\n{ex.Message}",
-                    Topmost = true
+                    Topmost = true,
+                    Icon = MsBox.Avalonia.Enums.Icon.Error,
+                    WindowIcon = this.Icon
                 }).ShowWindowAsync();
                 
                 SdPrepStatus.Text = $"✗ Error: {ex.Message}";
