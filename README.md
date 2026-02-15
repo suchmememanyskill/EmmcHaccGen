@@ -4,11 +4,9 @@ Supposed to be a replacement of ChoiDujour
 
 # How to use (GUI)
 
-Go to the [Releases](https://github.com/suchmememanyskill/EmmcHaccGen/releases) tab to grab yourself the latest `EmmcHaccGen.GUI.Windows` release.
+Go to the [Releases](https://github.com/suchmememanyskill/EmmcHaccGen/releases) tab to grab yourself the latest EmmcHaccGen release, download the release corresponding to your operating system and system architecture.
 
-Extract into a new folder and open `EmmcHaccGen.GUI.exe`
-
-Select the location of `prod.keys`, and the firmware folder. Then toggle relevant options, then generate.
+Select the location of `prod.keys` and your firmware dump, then toggle relevant options and click `Generate`.
 
 ![EmmcHaccGen.GUI.Windows Preview](preview.png)
 
