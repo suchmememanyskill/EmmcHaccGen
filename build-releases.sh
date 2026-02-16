@@ -20,9 +20,9 @@ dotnet publish "$PROJECT" \
     -c Release \
     -r win-x64 \
     --self-contained true \
-    /p:PublishSingleFile=true \
-    /p:IncludeNativeLibrariesForSelfExtract=true \
-    /p:PublishTrimmed=false \
+    -p:PublishSingleFile=true \
+    -p:IncludeNativeLibrariesForSelfExtract=true \
+    -p:PublishTrimmed=false \
     -o "$OUTPUT_DIR/win-x64"
 if [ $? -eq 0 ]; then
     echo "✓ Windows build complete"
@@ -41,9 +41,9 @@ dotnet publish "$PROJECT" \
     -c Release \
     -r linux-x64 \
     --self-contained true \
-    /p:PublishSingleFile=true \
-    /p:IncludeNativeLibrariesForSelfExtract=true \
-    /p:PublishTrimmed=false \
+    -p:PublishSingleFile=true \
+    -p:IncludeNativeLibrariesForSelfExtract=true \
+    -p:PublishTrimmed=false \
     -o "$OUTPUT_DIR/linux-x64"
 if [ $? -eq 0 ]; then
     echo "✓ Linux build complete"
@@ -63,9 +63,9 @@ dotnet publish "$PROJECT" \
     -c Release \
     -r osx-x64 \
     --self-contained true \
-    /p:PublishSingleFile=true \
-    /p:IncludeNativeLibrariesForSelfExtract=true \
-    /p:PublishTrimmed=false \
+    -p:PublishSingleFile=true \
+    -p:IncludeNativeLibrariesForSelfExtract=true \
+    -p:PublishTrimmed=false \
     -o "$OUTPUT_DIR/osx-x64"
 if [ $? -eq 0 ]; then
     echo "✓ macOS build complete"
@@ -86,7 +86,7 @@ if [ $? -eq 0 ]; then
     
     cat > "${APP_BUNDLE}/Contents/Info.plist" << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs-propertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
@@ -110,7 +110,7 @@ if [ $? -eq 0 ]; then
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
 </dict>
-</plist>
+<-plist>
 EOF
 
 if [ -f "../../EmmcHaccGen.GUI/Assets/logo.icns" ]; then
@@ -136,9 +136,9 @@ dotnet publish "$PROJECT" \
     -c Release \
     -r osx-arm64 \
     --self-contained true \
-    /p:PublishSingleFile=true \
-    /p:IncludeNativeLibrariesForSelfExtract=true \
-    /p:PublishTrimmed=false \
+    -p:PublishSingleFile=true \
+    -p:IncludeNativeLibrariesForSelfExtract=true \
+    -p:PublishTrimmed=false \
     -o "$OUTPUT_DIR/osx-arm64"
 if [ $? -eq 0 ]; then
     echo "✓ macOS ARM64 build complete"
@@ -159,7 +159,7 @@ if [ $? -eq 0 ]; then
     
     cat > "${APP_BUNDLE}/Contents/Info.plist" << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs-propertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
@@ -183,7 +183,7 @@ if [ $? -eq 0 ]; then
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
 </dict>
-</plist>
+<-plist>
 EOF
 
 if [ -f "../../EmmcHaccGen.GUI/Assets/logo.icns" ]; then
