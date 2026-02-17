@@ -31,9 +31,6 @@ namespace EmmcHaccGen.GUI
             MarikoToggle.IsCheckedChanged += (x, y) => OnMarikoToggleChanged();
             GenerateButton.Command = new LambdaCommand(x => Generate());
             PrepareSdButton.Command = new LambdaCommand(x => PrepareSdCard());
-
-            if (File.Exists("prod.keys"))
-                ProdKeysInput.Text = "prod.keys";
         }
 
         private async Task OnBrowseProdKeys()

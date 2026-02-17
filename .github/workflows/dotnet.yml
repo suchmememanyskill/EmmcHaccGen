@@ -1,61 +1,55 @@
 name: .NET
-
 on:
   push:
   pull_request:
     branches: [ master ]
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
-    - name: clone repo
+    - name: Clone repo
       uses: actions/checkout@v4
-        
+
     - name: Setup .NET
-      uses: actions/setup-dotnet@v2
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 7.0.x
+        dotnet-version: 10.0.x
 
     - name: Restore dependencies
       run: dotnet restore
 
-    - name: CLI Os-Agnostic build
-      run: |
-        cd EmmcHaccGen
-        dotnet publish -o ../CLI -p:Configuration=Release
+    - name: Install zip
+      run: choco install zip -y
 
-    - name: GUI Os-Agnostic Build
-      run: |
-        cd EmmcHaccGen.GUI
-        dotnet publish -o ../GUI -p:Configuration=Release
+    - name: Build all releases
+      shell: bash
+      run: ./build-releases.sh
 
-    - name: GUI Windows Build
-      run: |
-        cd EmmcHaccGen.GUI
-        dotnet publish -o ../GUI.Windows -r win-x64 --self-contained -p:PublishSingleFile=true -p:Configuration=Release
-        cd ../GUI.Windows
-        del EmmcHaccGen.exe
-
-    - name: Upload CLI Os-Agnostic
+    - name: Upload Windows x64
       uses: actions/upload-artifact@v4
       with:
-        name: EmmcHaccGen.CLI
-        path: |
-          ./CLI
+        name: EmmcHaccGen-win-x64
+        path: releases/EmmcHaccGen-win-x64.zip
 
-    - name: Upload GUI Os-Agnostic
+    - name: Upload Linux x64
       uses: actions/upload-artifact@v4
       with:
-        name: EmmcHaccGen.GUI
-        path: |
-          ./GUI
+        name: EmmcHaccGen-linux-x64
+        path: releases/EmmcHaccGen-linux-x64.tar.gz
 
-    - name: Upload GUI Windows
+    - name: Upload macOS x64
       uses: actions/upload-artifact@v4
       with:
-        name: EmmcHaccGen.GUI.Windows
+        name: EmmcHaccGen-osx-x64
         path: |
-          ./GUI.Windows
+          releases/EmmcHaccGen-osx-x64.tar.gz
+          releases/EmmcHaccGen-osx-x64-app.zip
+
+    - name: Upload macOS ARM64
+      uses: actions/upload-artifact@v4
+      with:
+        name: EmmcHaccGen-osx-arm64
+        path: |
+          releases/EmmcHaccGen-osx-arm64.tar.gz
+          releases/EmmcHaccGen-osx-arm64-app.zip
