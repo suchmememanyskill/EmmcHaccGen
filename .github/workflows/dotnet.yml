@@ -19,6 +19,9 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
 
+    - name: Install zip
+      run: choco install zip -y
+
     - name: Build all releases
       shell: bash
       run: ./build-releases.sh
