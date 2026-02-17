@@ -86,7 +86,7 @@ if [ $? -eq 0 ]; then
     
     cat > "${APP_BUNDLE}/Contents/Info.plist" << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs-propertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
@@ -110,7 +110,7 @@ if [ $? -eq 0 ]; then
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
 </dict>
-<-plist>
+</plist>
 EOF
 
 if [ -f "../../EmmcHaccGen.GUI/Assets/logo.icns" ]; then
@@ -159,7 +159,7 @@ if [ $? -eq 0 ]; then
     
     cat > "${APP_BUNDLE}/Contents/Info.plist" << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs-propertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
@@ -183,7 +183,7 @@ if [ $? -eq 0 ]; then
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
 </dict>
-<-plist>
+</plist>
 EOF
 
 if [ -f "../../EmmcHaccGen.GUI/Assets/logo.icns" ]; then
